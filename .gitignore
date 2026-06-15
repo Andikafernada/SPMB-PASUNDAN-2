@@ -1,0 +1,32 @@
+# ============================================
+# SPMB SMK Pasundan 2 — Git Ignore
+# File ini DIKOMIT, tapi .env tidak
+# ============================================
+
+# Environment file (credentials)
+.env
+.env.local
+.env.production
+
+# Session & cache
+*.log
+*.cache
+
+# Upload files
+uploads/
+
+# Sistem
+.DS_Store
+Thumbs.db
+
+# Aider AI (opsional, jika tidak ingin track history)
+.aider.chat.history.md
+.aider.input.history
+.aider.tags.cache.v4/
+
+# Backup files
+*.bak
+*.backup
+*copy.php
+*.bck
+bck*

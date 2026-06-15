@@ -1,0 +1,485 @@
+<?php
+/**
+ * LANDING PAGE - SPMB SMK Pasundan 2 Bandung
+ * Fitur: Dark Mode, Gamifikasi Kuis, Looping Video, E-Magazine (Pop-up View), Maskot Bang Jangkrik
+ */
+include 'config.php';
+
+// Statistik pendaftar
+$total_siswa = 0;
+$r = mysqli_query($conn, "SELECT COUNT(*) as n FROM siswa");
+if ($r) $total_siswa = mysqli_fetch_assoc($r)['n'] ?? 0;
+
+// Data gelombang dari database
+$gel_list = [];
+$rg = mysqli_query($conn, "SELECT * FROM gelombang ORDER BY biaya ASC");
+while ($g = mysqli_fetch_assoc($rg)) $gel_list[] = $g;
+if (empty($gel_list)) {
+    $gel_list = [
+        ['id'=>1,'nama'=>'Gelombang 1','biaya'=>150000, 'tgl_mulai'=>'2026-01-01'],
+        ['id'=>2,'nama'=>'Gelombang 2','biaya'=>175000, 'tgl_mulai'=>'2026-03-01'],
+        ['id'=>3,'nama'=>'Gelombang 3','biaya'=>200000, 'tgl_mulai'=>'2026-05-01'],
+    ];
+}
+
+// WhatsApp & YouTube ID dari .env atau fallback
+$wa = $_ENV['WA_CONTACT'] ?? '628123456789';
+$yt = $_ENV['YOUTUBE_VIDEO_ID'] ?? 'YOUR_VIDEO_ID';
+
+// Cek Status Handler
+$status = null;
+$status_err = '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cek_status'])) {
+    $kode = trim(mysqli_real_escape_string($conn, $_POST['kode'] ?? ''));
+    if ($kode) {
+        $stmt = mysqli_prepare($conn, "SELECT id_siswa, id_pendaftaran, nama_lengkap, jurusan, asal_sekolah, status_siswa, status_pendaftaran, status_bayar, nik, nisn, no_hp FROM siswa WHERE id_pendaftaran=? LIMIT 1");
+        mysqli_stmt_bind_param($stmt, "s", $kode);
+        mysqli_stmt_execute($stmt);
+        $rs = mysqli_stmt_get_result($stmt);
+        if ($rs && mysqli_num_rows($rs) > 0) {
+            $status = mysqli_fetch_assoc($rs);
+            // Cek kelengkapan data wajib
+            $wajib = [$status['nik'], $status['nisn'], $status['no_hp'], $status['jurusan']];
+            $status['data_lengkap'] = !in_array('', $wajib) && !empty(array_filter($wajib));
+        } else {
+            $status_err = 'ID Pendaftaran tidak ditemukan. Pastikan ID yang dimasukkan benar.';
+        }
+        mysqli_stmt_close($stmt);
+    }
+    $_SESSION['cek_status'] = $status;
+    $_SESSION['cek_status_err'] = $status_err;
+    header('Location: ' . $_SERVER['PHP_SELF'] . '?status=ok#cek');
+    exit;
+}
+
+// Ambil hasil redirect session
+if (isset($_GET['status']) && $_GET['status'] === 'ok') {
+    $status = $_SESSION['cek_status'] ?? null;
+    $status_err = $_SESSION['cek_status_err'] ?? '';
+    unset($_SESSION['cek_status'], $_SESSION['cek_status_err']);
+}
+?>
+<!DOCTYPE html>
+<html lang="id" class="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SPMB 2026 - SMK Pasundan 2 Bandung</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['Plus Jakarta Sans', 'sans-serif'],
+          outfit: ['Outfit', 'sans-serif'],
+        }
+      }
+    }
+  }
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{transition: background-color 0.3s, color 0.3s;}
+html{scroll-behavior: smooth;}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:10px}
+.dark ::-webkit-scrollbar-thumb{background:#475569}
+@keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.4}}
+.pulse-dot{animation:pulse-dot 2s infinite}
+.quiz-card { transition: all 0.3s ease; }
+.quiz-card:hover { transform: translateY(-5px) scale(1.02); }
+</style>
+</head>
+<body class="bg-slate-50 text-slate-700 dark:bg-slate-900 dark:text-slate-200">
+
+<nav class="sticky top-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg border-b border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+ <div class="flex items-center gap-3">
+  <div class="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl flex items-center justify-center shadow-md transform hover:rotate-6 transition">
+   <span class="text-white font-outfit font-black text-sm">P2</span>
+  </div>
+  <div>
+   <div class="font-outfit font-bold text-slate-900 dark:text-white text-sm lg:text-base">SMK Pasundan 2 Bandung</div>
+   <div class="text-[10px] text-slate-500 dark:text-slate-400 -mt-0.5">Penerimaan Siswa Baru <?= date('Y'); ?></div>
+  </div>
+ </div>
+ <div class="flex items-center gap-2 sm:gap-4">
+  <button id="theme-toggle" class="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-300 hover:ring-2 ring-blue-500 transition hidden sm:block">
+    <span id="theme-icon">🌙</span>
+  </button>
+  
+  <a href="#jurusan" class="hidden lg:inline text-sm font-semibold hover:text-blue-600 dark:hover:text-blue-400 transition">Jurusan</a>
+  <a href="#magazine" class="hidden lg:inline text-sm font-semibold hover:text-blue-600 dark:hover:text-blue-400 transition">E-Magazine</a>
+  
+  <a href="panitia/index.php" title="Login Panitia" 
+     class="group relative inline-flex items-center justify-center w-9 h-9 sm:w-auto sm:px-4 sm:py-2.5 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg text-xs font-bold overflow-hidden transition-all duration-300 hover:border-indigo-500 hover:shadow-[0_0_15px_rgba(79,70,229,0.4)] hover:-translate-y-0.5">
+    <div class="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+    
+    <svg class="w-4 h-4 text-slate-500 dark:text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+    </svg>
+    
+    <span class="hidden sm:inline ml-2 text-slate-600 dark:text-slate-300 group-hover:text-indigo-700 dark:group-hover:text-indigo-300 relative z-10 transition-colors">Panitia</span>
+  </a>
+
+  <a href="public/daftar.php"
+     class="px-4 py-2 sm:px-5 sm:py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg shadow-md shadow-blue-500/30 transition hover:-translate-y-0.5">
+    Daftar Sekarang
+  </a>
+ </div>
+</div>
+</nav>
+
+<section class="relative overflow-hidden pt-10 pb-20">
+ <div class="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 -z-10"></div>
+ <div class="relative max-w-7xl mx-auto px-6 lg:py-16 flex flex-col-reverse lg:flex-row items-center gap-12">
+  <div class="flex-1 text-center lg:text-left z-10">
+   <div class="inline-flex items-center gap-2 bg-white dark:bg-slate-800 border border-blue-200 dark:border-slate-700 rounded-full px-4 py-2 mb-6 shadow-sm">
+    <span class="w-2 h-2 bg-blue-500 rounded-full pulse-dot"></span>
+    <span class="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">Pendaftaran Terbuka</span>
+   </div>
+   <h1 class="font-outfit text-4xl md:text-6xl font-black text-slate-900 dark:text-white leading-tight mb-6">
+    Pilih Jurusan<br>
+    <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-500">Nggak Pake</span> Bingung.
+   </h1>
+   <p class="text-base text-slate-600 dark:text-slate-300 max-w-md mx-auto lg:mx-0 mb-8 leading-relaxed">
+    Eksplorasi potensimu di SMK Pasundan 2 Bandung. Lingkungan asik, fasilitas update, siap kerja atau raih mimpimu sejak lulus.
+   </p>
+   <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+    <a href="public/daftar.php"
+       class="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-sm rounded-2xl shadow-lg shadow-blue-600/30 text-center transition hover:-translate-y-1 inline-flex items-center justify-center gap-2">
+     🚀 Gas Daftar Sekarang
+    </a>
+    <a href="#kuis"
+       class="px-8 py-4 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 hover:border-blue-500 font-extrabold text-sm rounded-2xl shadow-sm text-center transition hover:-translate-y-1 inline-flex items-center justify-center gap-2">
+     🎮 Main Kuis Minat
+    </a>
+   </div>
+  </div>
+  
+  <div class="flex-1 w-full max-w-xl">
+   <div class="relative rounded-[2rem] overflow-hidden shadow-2xl shadow-indigo-500/20 border-4 border-white dark:border-slate-800 group" style="aspect-ratio:16/9;background:#e2e8f0">
+    <div class="absolute inset-0 z-10 bg-indigo-900/10 group-hover:bg-transparent transition pointer-events-none"></div>
+    <iframe
+     style="position:absolute;inset:0;width:100%;height:100%;border:0; pointer-events:none;"
+     src="https://www.youtube.com/embed/<?= $yt ?>?autoplay=1&mute=1&loop=1&playlist=<?= $yt ?>&controls=0&modestbranding=1&showinfo=0"
+     allow="autoplay; encrypted-media" allowfullscreen></iframe>
+   </div>
+  </div>
+ </div>
+</section>
+
+<section id="kuis" class="py-20 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800">
+<div class="max-w-4xl mx-auto px-6 text-center">
+  <span class="inline-block px-4 py-1.5 bg-indigo-100 dark:bg-indigo-900/50 border border-indigo-200 dark:border-indigo-700/50 rounded-full text-xs font-bold text-indigo-700 dark:text-indigo-300 uppercase tracking-wider mb-4">Mini Game</span>
+  <h2 class="font-outfit text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-4">Bingung Pilih Jurusan?</h2>
+  <p class="text-slate-500 dark:text-slate-400 mb-10">Jawab pertanyaan singkat ini untuk temukan jurusan yang paling cocok dengan passion kamu!</p>
+
+  <div id="quiz-container" class="bg-slate-50 dark:bg-slate-800 rounded-3xl p-8 shadow-sm border border-slate-200 dark:border-slate-700 text-left relative overflow-hidden">
+    <div class="w-full bg-slate-200 dark:bg-slate-700 h-2 rounded-full mb-8">
+      <div id="quiz-progress" class="bg-gradient-to-r from-blue-500 to-indigo-600 h-2 rounded-full transition-all duration-500" style="width: 33%"></div>
+    </div>
+    <div id="quiz-content">
+      </div>
+  </div>
+</div>
+</section>
+
+<section id="jurusan" class="py-20 bg-slate-50 dark:bg-slate-800/50">
+<div class="max-w-7xl mx-auto px-6">
+ <div class="text-center mb-12">
+  <h2 class="font-outfit text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-2">5 Jurusan Utama</h2>
+ </div>
+ <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+  <?php
+  $jurusan = [
+   ['kode'=>'TJKT','nama'=>'Teknik Jaringan & Telekomunikasi','icon'=>'💻','bg'=>'bg-blue-100 dark:bg-blue-900/50','tx'=>'text-blue-600 dark:text-blue-400','desc'=>'Setup server, rakit PC, & config jaringan. Cocok buat yang suka dunia IT.'],
+   ['kode'=>'TE' ,'nama'=>'Teknik Elektronika','icon'=>'📡','bg'=>'bg-purple-100 dark:bg-purple-900/50','tx'=>'text-purple-600 dark:text-purple-400','desc'=>'Kuasai IoT, robotika, & sirkuit cerdas. Masa depan ada di tanganmu.'],
+   ['kode'=>'TM' ,'nama'=>'Teknik Mesin','icon'=>'⚙️','bg'=>'bg-green-100 dark:bg-green-900/50','tx'=>'text-green-600 dark:text-green-400','desc'=>'Desain & manufaktur. Mekanik handal yang menggerakkan industri.'],
+   ['kode'=>'TO' ,'nama'=>'Teknik Otomotif','icon'=>'🚗','bg'=>'bg-orange-100 dark:bg-orange-900/50','tx'=>'text-orange-600 dark:text-orange-400','desc'=>'Modifikasi & maintenance roda empat. Biar hobi otomotif jadi cuan.'],
+   ['kode'=>'TSM','nama'=>'Teknik Sepeda Motor','icon'=>'🏍','bg'=>'bg-red-100 dark:bg-red-900/50','tx'=>'text-red-600 dark:text-red-400','desc'=>'Spesialis motor, injeksi & teknologi terkini. Siap buka bengkel sendiri.'],
+  ];
+  foreach ($jurusan as $j):
+  ?>
+  <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 hover:shadow-xl dark:hover:shadow-indigo-900/20 transition hover:-translate-y-1">
+   <div class="flex items-start gap-4">
+    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl flex-shrink-0 <?= $j['bg'] ?>"><?= $j['icon'] ?></div>
+    <div>
+     <div class="text-[10px] font-black uppercase tracking-widest <?= $j['tx'] ?> mb-1"><?= $j['kode'] ?></div>
+     <h3 class="font-outfit font-bold text-slate-900 dark:text-white text-base mb-2"><?= $j['nama'] ?></h3>
+     <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed"><?= $j['desc'] ?></p>
+    </div>
+   </div>
+  </div>
+  <?php endforeach; ?>
+ </div>
+</div>
+</section>
+
+<section id="magazine" class="py-20 bg-gradient-to-br from-indigo-900 via-slate-900 to-black overflow-hidden relative border-t border-slate-800">
+  <div class="absolute top-0 left-0 w-full h-full opacity-20" style="background-image: radial-gradient(circle at 20% 30%, #4f46e5 0%, transparent 50%);"></div>
+  <div class="max-w-6xl mx-auto px-6 relative z-10 flex flex-col md:flex-row items-center gap-12">
+    <div class="flex-1 text-center md:text-left">
+      <span class="inline-block px-4 py-1.5 bg-indigo-500/30 border border-indigo-400/50 rounded-full text-xs font-bold text-indigo-300 uppercase tracking-wider mb-4 backdrop-blur-sm">Brosur Interaktif</span>
+      <h2 class="font-outfit text-3xl md:text-5xl font-black text-white mb-4 leading-tight">
+        Bongkar Rahasia di <br><span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">P2 Tech-Zine Vol. 1</span>
+      </h2>
+      <p class="text-slate-400 text-sm md:text-base leading-relaxed mb-8">
+        Bukan brosur sekolah biasa. Klik tombol di bawah untuk langsung membaca e-magazine interaktif kami tanpa perlu mengunduh. Temukan info fasilitas lab, teknologi terkini, dan panduan memilih jurusan!
+      </p>
+      <div class="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
+        <button onclick="openPdfModal()"
+           class="px-8 py-4 bg-white text-indigo-900 hover:bg-slate-100 font-extrabold text-sm rounded-xl shadow-lg shadow-indigo-500/20 transition hover:-translate-y-1 inline-flex items-center justify-center gap-2">
+          📖 Baca Sekarang (Pop-Up)
+        </button>
+      </div>
+    </div>
+    
+    <div class="flex-1 w-full max-w-sm relative group">
+      <div class="absolute inset-0 bg-indigo-500 blur-3xl opacity-30 group-hover:opacity-50 transition duration-500 rounded-full"></div>
+      <div class="relative w-full aspect-[3/4] bg-gradient-to-br from-indigo-700 via-slate-900 to-black rounded-2xl shadow-2xl border-2 border-white/20 transform rotate-[-3deg] group-hover:rotate-0 transition duration-500 ease-out flex flex-col justify-between p-6 overflow-hidden select-none cursor-pointer" onclick="openPdfModal()">
+        <div class="absolute -right-10 -top-10 w-40 h-40 bg-blue-500/10 rounded-full blur-xl"></div>
+        <div>
+          <div class="flex justify-between items-center border-b border-white/10 pb-3">
+            <span class="text-[10px] tracking-widest text-indigo-400 font-black uppercase">P2 YOUTH EDITION</span>
+            <span class="text-[9px] text-slate-500">VOL. 01 // 2026</span>
+          </div>
+          <h3 class="font-outfit font-black text-4xl text-white mt-6 leading-none tracking-tight">P2<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">TECH-ZINE</span></h3>
+          <p class="text-xs text-slate-400 mt-2 max-w-[80%]">Membongkar ekosistem digital dan inovasi teknik di SMK Pasundan 2 Bandung.</p>
+        </div>
+        <div class="border-t border-white/10 pt-4 flex justify-between items-center">
+          <div class="text-[10px] text-slate-500 font-mono">Powered by AI & Automation</div>
+          <span class="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-white text-xs group-hover:bg-white group-hover:text-indigo-900 transition">➔</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="cek" class="py-16 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800">
+<div class="max-w-4xl mx-auto px-6">
+ <div class="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-3xl shadow-xl overflow-hidden relative">
+  <div class="absolute top-0 right-0 p-10 opacity-10 transform translate-x-1/4 -translate-y-1/4">
+    <svg width="200" height="200" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 22h20L12 2zm0 4.5l6.5 13h-13L12 6.5z"/></svg>
+  </div>
+  
+  <div class="p-8 md:p-12 text-white relative z-10">
+   <h2 class="font-outfit text-3xl font-black mb-2">Cek Status Pendaftaran</h2>
+   <p class="text-blue-100 text-sm mb-8">Pantau kelengkapan berkas dan status pembayaranmu di sini.</p>
+
+   <form method="POST" class="flex flex-col sm:flex-row gap-3">
+    <input type="hidden" name="cek_status" value="1">
+    <input type="text" name="kode" placeholder="Contoh: PPDB26-00001" required
+           class="flex-1 px-5 py-4 bg-white/10 backdrop-blur-md border border-white/30 rounded-xl text-white placeholder-blue-200 text-sm font-medium outline-none focus:bg-white/20 transition">
+    <button type="submit" class="px-8 py-4 bg-white text-blue-700 hover:bg-slate-50 font-bold text-sm rounded-xl shadow-lg transition hover:scale-105">
+     🔍 Cek Sekarang
+    </button>
+   </form>
+   
+   <?php if ($status_err): ?>
+   <div class="mt-4 px-4 py-3 bg-red-500/20 border border-red-400/50 rounded-lg text-sm text-white flex items-center gap-2 backdrop-blur-sm">
+    <span>⚠️</span><?= htmlspecialchars($status_err) ?>
+   </div>
+   <?php endif; ?>
+
+   <?php if ($status): ?>
+   <div class="mt-8 bg-white text-slate-800 dark:bg-slate-800 dark:text-slate-200 rounded-2xl p-6 shadow-inner animate-[pulse-dot_0.3s_ease-out]">
+     <?php
+     $jk = strtoupper($status['status_siswa'] ?? '');
+     $lunas = $jk === 'SUDAH DAFTAR ULANG';
+     $data_lengkap = $status['data_lengkap'] ?? false;
+     ?>
+     <div class="flex items-center gap-4 border-b border-slate-100 dark:border-slate-700 pb-4 mb-4">
+      <div class="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-xl">👤</div>
+      <div>
+       <div class="font-outfit font-black text-lg"><?= htmlspecialchars($status['nama_lengkap']) ?></div>
+       <div class="text-xs text-slate-500">ID: <?= $status['id_pendaftaran'] ?> | Jurusan: <?= htmlspecialchars($status['jurusan'] ?: '-') ?></div>
+      </div>
+     </div>
+     
+     <div class="grid grid-cols-2 gap-4">
+       <div class="p-3 rounded-xl <?= $data_lengkap ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400' : 'bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400' ?>">
+         <div class="text-[10px] uppercase font-bold mb-1 opacity-70">Data Siswa</div>
+         <div class="font-bold text-sm"><?= $data_lengkap ? 'LENGKAP ✅' : 'BELUM LENGKAP ⚠️' ?></div>
+       </div>
+       <div class="p-3 rounded-xl <?= $lunas ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400' : 'bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400' ?>">
+         <div class="text-[10px] uppercase font-bold mb-1 opacity-70">Daftar Ulang</div>
+         <div class="font-bold text-sm"><?= $lunas ? 'SELESAI ✅' : 'MENUNGGU ⏳' ?></div>
+       </div>
+     </div>
+   </div>
+   <?php endif; ?>
+  </div>
+ </div>
+</div>
+</section>
+
+<div id="pdf-modal" class="fixed inset-0 z-[60] hidden">
+  <div class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" onclick="closePdfModal()"></div>
+  <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[95%] md:w-[85%] h-[88vh] bg-slate-900 border border-slate-700 rounded-2xl overflow-hidden shadow-2xl flex flex-col">
+    <div class="flex justify-between items-center px-6 py-4 bg-slate-800 border-b border-slate-700">
+      <div class="flex items-center gap-2">
+        <span class="text-xl">📖</span>
+        <h3 class="font-outfit font-bold text-white">P2 Tech-Zine Vol. 1 - Viewer</h3>
+      </div>
+      <button onclick="closePdfModal()" class="text-slate-400 hover:text-white bg-slate-700 hover:bg-red-600 px-4 py-1.5 rounded-xl transition font-bold text-sm">
+        Tutup ✖
+      </button>
+    </div>
+    <div class="flex-1 w-full bg-slate-100">
+      <iframe id="pdf-frame" src="" class="w-full h-full border-0"></iframe>
+    </div>
+  </div>
+</div>
+
+<footer class="bg-slate-900 py-8 px-6 text-center dark:bg-black border-t border-slate-800">
+<div class="max-w-4xl mx-auto flex flex-col items-center gap-2">
+ <div class="text-white text-sm font-bold font-outfit">SMK Pasundan 2 Bandung</div>
+ <div class="text-slate-500 text-xs">© <?= date('Y') ?> Hak cipta dilindungi.</div>
+</div>
+</footer>
+
+<div class="fixed bottom-6 right-6 z-50 group flex flex-col items-end">
+  <div class="mb-3 px-5 py-3 bg-white dark:bg-slate-800 rounded-2xl rounded-br-none shadow-xl shadow-blue-900/20 border border-slate-100 dark:border-slate-700 transform origin-bottom-right transition-all duration-300 translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 max-w-xs">
+    <p class="text-sm text-slate-700 dark:text-slate-300 font-medium leading-snug">
+      <span class="font-bold text-indigo-600 dark:text-indigo-400">Wangsit hari ini:</span><br>
+      Ada yang bingung mau daftar? Sini ngobrol bareng ahlinya! 🔮🦗
+    </p>
+  </div>
+  <a href="https://wa.me/<?= $wa ?>?text=Halo%20Bang%20Jangkrik,%20saya%20mau%20tanya%20soal%20SPMB" target="_blank"
+     class="relative w-16 h-16 bg-gradient-to-tr from-indigo-600 to-purple-600 rounded-full shadow-lg shadow-purple-500/30 flex items-center justify-center text-white transition hover:scale-110 active:scale-95 border-2 border-white dark:border-slate-800 overflow-hidden">
+    <span class="text-3xl select-none">🦗</span>
+    <span class="absolute top-0 right-0 w-4 h-4 bg-green-500 border-2 border-white dark:border-slate-800 rounded-full"></span>
+  </a>
+</div>
+
+<script>
+// CONTROLLER DARK MODE
+const html = document.documentElement;
+const themeToggleBtn = document.getElementById('theme-toggle');
+const themeIcon = document.getElementById('theme-icon');
+
+function updateTheme(isDark) {
+  if (isDark) {
+    html.classList.add('dark');
+    themeIcon.textContent = '☀️';
+  } else {
+    html.classList.remove('dark');
+    themeIcon.textContent = '🌙';
+  }
+}
+
+const userPrefersDark = localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+updateTheme(userPrefersDark);
+
+themeToggleBtn.addEventListener('click', () => {
+  const isDark = html.classList.contains('dark');
+  updateTheme(!isDark);
+  localStorage.theme = !isDark ? 'dark' : 'light';
+});
+
+// CONTROLLER MODAL PDF
+function openPdfModal() {
+  const pdfUrl = "public/assets/emagazine-p2.pdf";
+  document.getElementById('pdf-frame').src = pdfUrl;
+  document.getElementById('pdf-modal').classList.remove('hidden');
+}
+
+function closePdfModal() {
+  document.getElementById('pdf-modal').classList.add('hidden');
+  document.getElementById('pdf-frame').src = ""; // Stop processing iframe when closed
+}
+
+// GAMIFIKASI KUIS MINAT INTERAKTIF
+const quizData = [
+  {
+    question: "Apa hal yang paling bikin kamu penasaran?",
+    options: [
+      { text: "Bongkar pasang isi komputer / Jaringan", score: { TJKT: 2, TE: 1 } },
+      { text: "Ngoprek mesin motor, bikin kenceng", score: { TSM: 2, TM: 1 } },
+      { text: "Bikin robot atau alat elektronik canggih", score: { TE: 2, TJKT: 1 } },
+      { text: "Dunia mobil, modifikasi & mesinnya", score: { TO: 2, TM: 1 } }
+    ]
+  },
+  {
+    question: "Kalau ada barang elektronik rusak di rumah, kamu biasanya...",
+    options: [
+      { text: "Cek komponen bagian dalam / Solder ulang", score: { TE: 2 } },
+      { text: "Bongkar casing & utak-atik mekaniknya", score: { TM: 2, TSM: 1 } },
+      { text: "Cari tutorial perbaikannya di YouTube (Masalah OS/Software)", score: { TJKT: 2 } },
+      { text: "Panggil tukang servis tapi diperhatikan cara kerjanya", score: { TO: 1, TSM: 1 } }
+    ]
+  }
+];
+
+let currentQuestion = 0;
+let scores = { TJKT: 0, TE: 0, TM: 0, TO: 0, TSM: 0 };
+const qContainer = document.getElementById('quiz-content');
+const qProgress = document.getElementById('quiz-progress');
+
+function renderQuestion() {
+  if (currentQuestion >= quizData.length) {
+    showResult();
+    return;
+  }
+  
+  const q = quizData[currentQuestion];
+  qProgress.style.width = ((currentQuestion + 1) / (quizData.length + 1)) * 100 + "%";
+  
+  let htmlContent = `<h3 class="font-outfit text-2xl font-bold text-slate-900 dark:text-white mb-6">${q.question}</h3><div class="grid sm:grid-cols-2 gap-4">`;
+  
+  q.options.forEach((opt) => {
+    htmlContent += `<button onclick='answerQuiz(${JSON.stringify(opt.score)})' class="quiz-card p-4 rounded-xl border-2 border-slate-200 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-500 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium text-left">
+              ${opt.text}
+             </button>`;
+  });
+  htmlContent += `</div>`;
+  qContainer.innerHTML = htmlContent;
+}
+
+window.answerQuiz = function(scoreData) {
+  for (let key in scoreData) {
+    scores[key] += scoreData[key];
+  }
+  currentQuestion++;
+  renderQuestion();
+}
+
+function showResult() {
+  qProgress.style.width = "100%";
+  let topMajor = Object.keys(scores).reduce((a, b) => scores[a] > scores[b] ? a : b);
+  
+  let desc = {
+    'TJKT': 'Wah, kamu berbakat jadi IT Engineer / Network Admin! Jurusan **Teknik Jaringan & Telekomunikasi** cocok banget buat kamu.',
+    'TE': 'Pola pikir logismu sinkron sekali dengan **Teknik Elektronika**. Kamu calon inovator IoT & Robotika masa depan!',
+    'TM': 'Suka hal teknis presisi & manufaktur baja? **Teknik Mesin** adalah jalan karir terbaikmu.',
+    'TO': 'Darah otomotif mengalir kuat di nadimu! Masuk **Teknik Otomotif** dan rancang kesuksesanmu.',
+    'TSM': 'Spesialis mesin motor premium & injeksi! Asah keahlian mekanik profesionalmu di **Teknik Sepeda Motor**.'
+  };
+
+  qContainer.innerHTML = `
+    <div class="text-center animate-[pulse-dot_0.5s_ease-out]">
+      <div class="text-5xl mb-4">🎉</div>
+      <h3 class="font-outfit text-2xl font-black text-slate-900 dark:text-white mb-2">Rekomendasi Jurusan: ${topMajor}</h3>
+      <p class="text-slate-600 dark:text-slate-300 mb-6">${desc[topMajor].replace(/\*\*(.*?)\*\*/g, '<strong class="text-blue-600 dark:text-blue-400">$1</strong>')}</p>
+      <a href="public/daftar.php" class="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition inline-block shadow-md">Gas Daftar Sekarang</a>
+      <button onclick="resetQuiz()" class="px-4 py-3 text-slate-400 hover:text-slate-600 dark:hover:text-white text-sm underline mt-3 block mx-auto">Ulangi Kuis</button>
+    </div>
+  `;
+}
+
+window.resetQuiz = function() {
+  currentQuestion = 0;
+  scores = { TJKT: 0, TE: 0, TM: 0, TO: 0, TSM: 0 };
+  renderQuestion();
+}
+
+// Jalankan kuis saat pertama dimuat
+renderQuestion();
+</script>
+</body>
+</html>
