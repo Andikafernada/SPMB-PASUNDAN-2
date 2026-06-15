@@ -333,6 +333,10 @@ $csrf_token = generate_csrf_token();
                             <td class="px-4 py-3 text-center">
                                 <div class="flex items-center justify-center gap-1">
                                     <?php if ($row['tpa_selesai'] == 1): ?>
+                                    <a href="sertifikat.php?id=<?= $row['id_siswa'] ?>&preview=1" target="_blank"
+                                       class="px-2 py-1.5 bg-amber-500/20 border border-amber-500/30 rounded text-xs font-bold text-amber-400 hover:bg-amber-500/30 transition" title="Sertifikat">
+                                        <i class="fas fa-scroll"></i>
+                                    </a>
                                     <a href="card.php?id=<?= $row['id_siswa'] ?>" target="_blank"
                                        class="px-2 py-1.5 bg-indigo-500/20 border border-indigo-500/30 rounded text-xs font-bold text-indigo-400 hover:bg-indigo-500/30 transition" title="Lihat Card">
                                         <i class="fas fa-medal"></i>

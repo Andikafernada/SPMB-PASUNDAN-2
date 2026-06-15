@@ -182,6 +182,24 @@ $w = $warna[$kategori_hasil['color']];
             </div>
         </div>
 
+        <!-- Sertifikat CTA -->
+        <div class="bg-gradient-to-r from-yellow-50 to-amber-50 rounded-2xl p-6 mb-6 border border-amber-200 animate-fade-up" style="animation-delay: 0.32s;">
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-gradient-to-br from-amber-400 to-yellow-500 rounded-xl flex items-center justify-center text-2xl">
+                        📜
+                    </div>
+                    <div>
+                        <div class="font-bold text-slate-900">Sertifikat TPA</div>
+                        <div class="text-sm text-slate-500">Unduh sertifikat resmi dalam format PDF!</div>
+                    </div>
+                </div>
+                <a href="sertifikat.php?id=<?= $id_siswa ?>" class="px-5 py-3 bg-gradient-to-r from-amber-400 to-yellow-500 text-white font-bold rounded-xl shadow-lg shadow-amber-500/30 hover:opacity-90 transition text-sm whitespace-nowrap">
+                    <i class="fas fa-file-pdf mr-2"></i>Download PDF
+                </a>
+            </div>
+        </div>
+
         <!-- Info -->
         <div class="bg-blue-50 rounded-xl p-4 text-sm text-blue-700 mb-6 animate-fade-up" style="animation-delay: 0.4s;">
             <i class="fas fa-info-circle mr-2"></i>
@@ -190,8 +208,11 @@ $w = $warna[$kategori_hasil['color']];
 
         <!-- Actions -->
         <div class="flex flex-col sm:flex-row gap-3 animate-fade-up" style="animation-delay: 0.5s;">
+            <a href="sertifikat.php?id=<?= $id_siswa ?>" class="flex-1 text-center px-6 py-4 bg-gradient-to-r from-amber-400 to-yellow-500 text-white font-bold rounded-xl shadow-lg hover:opacity-90 transition">
+                <i class="fas fa-scroll mr-2"></i>Download Sertifikat
+            </a>
             <a href="card.php?id=<?= $id_siswa ?>" class="flex-1 text-center px-6 py-4 bg-gradient-to-r from-amber-400 to-orange-500 text-white font-bold rounded-xl shadow-lg hover:opacity-90 transition">
-                <i class="fas fa-medal mr-2"></i>Download Achievement Card
+                <i class="fas fa-medal mr-2"></i>Achievement Card
             </a>
             <a href="../../index.php" class="flex-1 text-center px-6 py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition">
                 <i class="fas fa-home mr-2"></i>Beranda

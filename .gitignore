@@ -30,3 +30,6 @@ Thumbs.db
 *copy.php
 *.bck
 bck*
+
+# Composer dependencies
+vendor/

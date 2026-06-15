@@ -271,6 +271,9 @@ $share_code = strtoupper(substr($siswa['nama_lengkap'], 0, 3)) . '-' . $id_siswa
                 <i class="fas fa-shield-alt mr-2"></i>Kembali ke Admin
             </a>
             <?php else: ?>
+            <a href="sertifikat.php?id=<?= $id_siswa ?>" class="text-center px-6 py-4 bg-gradient-to-r from-amber-400 to-yellow-500 text-white font-bold rounded-xl shadow-lg hover:opacity-90 transition">
+                <i class="fas fa-scroll mr-2"></i>Download Sertifikat PDF
+            </a>
             <a href="../../index.php" class="text-center px-6 py-4 bg-blue-600 text-white font-bold rounded-xl shadow-lg">
                 <i class="fas fa-home mr-2"></i>Beranda
             </a>

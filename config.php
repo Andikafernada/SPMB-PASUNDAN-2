@@ -24,6 +24,13 @@ if (file_exists($env_file)) {
 }
 
 // ==========================================
+// COMPOSER AUTOLOADER (mPDF & libraries)
+// ==========================================
+if (file_exists(__DIR__ . '/vendor/autoload.php')) {
+    require_once __DIR__ . '/vendor/autoload.php';
+}
+
+// ==========================================
 // SESSION SECURITY HARDENING (ADAPTIF)
 // ==========================================
 // Deteksi apakah koneksi aman (HTTPS) dari web server asli, proxy, atau Cloudflare
