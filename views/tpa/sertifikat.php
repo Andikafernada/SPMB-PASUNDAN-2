@@ -382,7 +382,7 @@ $share_code  = strtoupper(substr($siswa['nama_lengkap'], 0, 3)) . '-' . $id_sisw
 <!-- Certificate title -->
 <div class="cert-title-wrap">
   <div class="cert-title">Sertifikat Tes Potensi Akademik</div>
-  <div class="cert-subtitle">TAHUN PELAJARAN 2025 / 2026</div>
+  <div class="cert-subtitle">TAHUN PELAJARAN <?= (date('Y') - 1) . ' / ' . date('Y') ?></div>
 </div>
 
 <!-- Presented to -->
@@ -431,7 +431,7 @@ $share_code  = strtoupper(substr($siswa['nama_lengkap'], 0, 3)) . '-' . $id_sisw
       <div class="achievement-label" style="color:<?= $badge['color'] ?>"><?= $badge['label'] ?></div>
       <div class="achievement-desc">
         Telah menyelesaikan Tes Potensi Akademik SMK Pasundan 2 Bandung<br>
-        Tahun Pelajaran 2025/2026 dengan hasil <?= $akurasi ?>% akurasi
+        Tahun Pelajaran <?= (date('Y') - 1) ?>/<?= date('Y') ?> dengan hasil <?= $akurasi ?>% akurasi
       </div>
     </div>
   </div>
@@ -449,7 +449,7 @@ $share_code  = strtoupper(substr($siswa['nama_lengkap'], 0, 3)) . '-' . $id_sisw
   </div>
   <div class="footer-right">
     <div>ID: <?= $id_siswa ?></div>
-    <div style="margin-top:1mm">SPMB 2026</div>
+    <div style="margin-top:1mm">SPMB <?= date('Y') ?></div>
   </div>
 </div>
 
@@ -477,7 +477,7 @@ if (isset($_GET['download']) && $_GET['download'] === 'pdf') {
 
             $mpdf->SetTitle("Sertifikat TPA - {$siswa['nama_lengkap']}");
             $mpdf->SetAuthor("SMK Pasundan 2 Bandung");
-            $mpdf->SetSubject("Tes Potensi Akademik 2025/2026");
+            $mpdf->SetSubject("Tes Potensi Akademik <?= (date('Y') - 1) ?>/<?= date('Y') ?>");
             $mpdf->SetCreator("SPMB SMK Pasundan 2 System");
 
             $mpdf->WriteHTML($html);

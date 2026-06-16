@@ -388,9 +388,9 @@ $csrf_token = generate_csrf_token();
                 <span class="font-bold text-white">Panduan Manajemen Ujian</span>
             </div>
             <ul class="space-y-1 text-xs">
-                <li>• Hak istimewa untuk **Reset Nilai TPA** dibatasi hanya untuk level akun <strong>superuser</strong> dan panitia <strong>pendaftaran</strong>.</li>
+                <li>• Hak istimewa untuk <strong>Reset Nilai TPA</strong> dibatasi hanya untuk level akun <strong>superuser</strong> dan panitia <strong>pendaftaran</strong>.</li>
                 <li>• Tombol pintasan <i class="fas fa-external-link-alt mx-1 text-emerald-400"></i> otomatis membuat tiruan session siswa agar penguji dapat memantau lembar kerja tanpa otentikasi ulang.</li>
-                <li>• Seluruh struktur cetak sertifikasi atau kartu prestasi dilengkapi dengan mode parameter peninjau (`&preview=1`) untuk pengamanan integritas data.</li>
+                <li>• Seluruh struktur cetak sertifikasi atau kartu prestasi dilengkapi dengan mode parameter peninjau (<code>&preview=1</code>) untuk pengamanan integritas data.</li>
             </ul>
         </div>
     </main>

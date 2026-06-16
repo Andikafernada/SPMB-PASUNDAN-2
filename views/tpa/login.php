@@ -19,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($id_reg)) {
         $error = 'ID Pendaftaran harus diisi!';
     } else {
-        // PERBAIKAN: Gunakan Prepared Statement
+        // Gunakan Prepared Statement
         $query = "SELECT * FROM siswa WHERE id_pendaftaran = ? LIMIT 1";
         $stmt = mysqli_prepare($conn, $query);
         

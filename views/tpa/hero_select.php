@@ -151,10 +151,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['select_hero'])) {
     // Simpan hero yang dipilih
     $_SESSION['tpa_hero'] = $heroes[$hero_id] ?? $default_hero;
 
-    // Log untuk debugging
-    error_log("hero_select: POST received, hero_id=$hero_id, redirecting to index.php");
-
-    // Redirect menggunakan PHP header (lebih reliable dari JavaScript)
+    // Redirect ke TPA test
     header("Location: index.php");
     exit();
 }
