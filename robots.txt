@@ -18,3 +18,5 @@ Disallow: /lengkapi_data.php
 Allow: /public/
 Allow: /index.php
 Allow: /favicon.svg
+Allow: /robots.txt
+Allow: /sitemap.xml

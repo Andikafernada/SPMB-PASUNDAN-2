@@ -62,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cek_status'])) {
         "email": "info@smkpasundan2.sch.id",
         "address": {
             "@type": "PostalAddress",
-            "streetAddress": "Jl. Riau No. 7",
+            "streetAddress": "Jl. Pelita Karya I No.2, Maleber, Kec. Andir",
             "addressLocality": "Bandung",
             "postalCode": "40112",
             "addressRegion": "Jawa Barat",
@@ -96,7 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cek_status'])) {
             "name": "SMK Pasundan 2 Bandung",
             "address": {
                 "@type": "PostalAddress",
-                "streetAddress": "Jl. Riau No. 7",
+                "streetAddress": "Jl. Pelita Karya I No.2, Maleber, Kec. Andir",
                 "addressLocality": "Bandung",
                 "postalCode": "40112",
                 "addressRegion": "Jawa Barat",
