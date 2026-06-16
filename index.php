@@ -48,6 +48,69 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cek_status'])) {
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://spmb.smkpasundan2.sch.id">
 
+    <!-- JSON-LD Schema for Organization -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "EducationalOrganization",
+        "name": "SMK Pasundan 2 Bandung",
+        "alternateName": "SPMB SMK Pasundan 2",
+        "url": "https://smkpasundan2.sch.id",
+        "logo": "https://spmb.smkpasundan2.sch.id/favicon.svg",
+        "image": "https://i.ibb.co/3WwYV6t/logo-pasundan-placeholder.png",
+        "telephone": "+62-22-7310119",
+        "email": "info@smkpasundan2.sch.id",
+        "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "Jl. Riau No. 7",
+            "addressLocality": "Bandung",
+            "postalCode": "40112",
+            "addressRegion": "Jawa Barat",
+            "addressCountry": "ID"
+        },
+        "geo": {
+            "@type": "GeoCoordinates",
+            "latitude": "-6.914744",
+            "longitude": "107.609810"
+        },
+        "sameAs": [
+            "https://www.instagram.com/smkpasundan2",
+            "https://www.facebook.com/smkpasundan2"
+        ]
+    }
+    </script>
+
+    <!-- JSON-LD Schema for Event -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Event",
+        "name": "SPMB 2026 - Pendaftaran Siswa Baru SMK Pasundan 2",
+        "description": "Pendaftaran Gelombang 2 SMK Pasundan 2 Bandung - Sekolah Vokasi dengan fasilitas standar industri",
+        "startDate": "2026-06-01",
+        "endDate": "2026-08-31",
+        "eventStatus": "https://schema.org/EventScheduled",
+        "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+        "location": {
+            "@type": "Place",
+            "name": "SMK Pasundan 2 Bandung",
+            "address": {
+                "@type": "PostalAddress",
+                "streetAddress": "Jl. Riau No. 7",
+                "addressLocality": "Bandung",
+                "postalCode": "40112",
+                "addressRegion": "Jawa Barat",
+                "addressCountry": "ID"
+            }
+        },
+        "organizer": {
+            "@type": "Organization",
+            "name": "SMK Pasundan 2 Bandung",
+            "url": "https://smkpasundan2.sch.id"
+        }
+    }
+    </script>
+
     <!-- Open Graph -->
     <meta property="og:title" content="Pendaftaran Siswa Baru - SMK Pasundan 2 Bandung">
     <meta property="og:description" content="Gelombang 2 telah dibuka! Gabung sekarang di ekosistem vokasi modern dengan fasilitas standar industri.">

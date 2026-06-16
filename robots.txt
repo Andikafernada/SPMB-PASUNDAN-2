@@ -1,0 +1,20 @@
+# robots.txt
+# SPMB SMK Pasundan 2 Bandung
+# https://spmb.smkpasundan2.sch.id
+
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://spmb.smkpasundan2.sch.id/sitemap.xml
+
+# Disallow admin and internal paths
+Disallow: /views/
+Disallow: /config.php
+Disallow: /login.php
+Disallow: /lengkapi_data.php
+
+# Allow public paths
+Allow: /public/
+Allow: /index.php
+Allow: /favicon.svg
