@@ -13,7 +13,16 @@ $wa = $_ENV['WA_CONTACT'] ?? '6283817203455';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+    <link rel="icon" type="image/png" sizes="32x32" href="../favicon.svg">
+    <link rel="apple-touch-icon" href="../favicon.svg">
+
     <title>Informasi Pendaftaran - SPMB SMK Pasundan 2 Bandung <?= date('Y'); ?></title>
+    <meta name="description" content="Informasi Pendaftaran SPMB SMK Pasundan 2 Bandung - Persyaratan dan jadwal pendaftaran">
+    <meta name="robots" content="index, follow">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Outfit:wght@600;700;800;900&display=swap" rel="stylesheet">
     <style>

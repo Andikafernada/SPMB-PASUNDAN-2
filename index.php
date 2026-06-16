@@ -36,14 +36,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cek_status'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon.svg">
+    <link rel="apple-touch-icon" href="favicon.svg">
+
     <title>SPMB 2026 | SMK Pasundan 2 Bandung - Pendaftaran Gelombang 2</title>
     <meta name="description" content="Pendaftaran Gelombang 2 SMK Pasundan 2 Bandung telah dibuka! Raih masa depanmu dengan ekosistem pendidikan vokasi dan fasilitas industri modern.">
     <meta name="keywords" content="SMK Pasundan 2, PPDB SMK Bandung, Sekolah Vokasi, TKJ, TKR, TPM, TSM, TAV, SPMB 2026">
+    <meta name="author" content="SMK Pasundan 2 Bandung">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://spmb.smkpasundan2.sch.id">
+
+    <!-- Open Graph -->
     <meta property="og:title" content="Pendaftaran Siswa Baru - SMK Pasundan 2 Bandung">
     <meta property="og:description" content="Gelombang 2 telah dibuka! Gabung sekarang di ekosistem vokasi modern dengan fasilitas standar industri.">
     <meta property="og:image" content="https://i.ibb.co/3WwYV6t/logo-pasundan-placeholder.png">
     <meta property="og:url" content="https://spmb.smkpasundan2.sch.id">
     <meta property="og:type" content="website">
+    <meta property="og:site_name" content="SPMB SMK Pasundan 2 Bandung">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Pendaftaran Siswa Baru - SMK Pasundan 2 Bandung">
+    <meta name="twitter:description" content="Gelombang 2 telah dibuka! Gabung sekarang di ekosistem vokasi modern.">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@700;800;900&display=swap" rel="stylesheet">
