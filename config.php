@@ -104,20 +104,22 @@ function record_login_attempt($conn, $username, $success = false) {
 // ==========================================
 /**
  * Check if current IP is allowed for admin access
- * Updated 2026-06-16: IP restriction ENABLED for internal network only
+ * Updated 2026-06-16: IP restriction DISABLED - system can be accessed from anywhere
+ * NOTE: For local-only deployment, enable this and add specific IPs
  * @return bool
  */
 function is_admin_ip_allowed() {
-    // Allow only internal network and localhost
+    // Allow all IPs - PPDB system needs to be accessible from anywhere
+    // For stricter security on local network only, enable IP restriction below
+    return true;
+
+    /* OPTION: Enable IP restriction for local deployment
     $allowed_ips = [
         '127.0.0.1',
         '::1',
         '192.168.',
         '10.',
         '172.16.',
-        '172.17.',
-        '172.18.',
-        '172.19.',
     ];
     $client_ip = get_client_ip();
     foreach ($allowed_ips as $ip) {
@@ -125,7 +127,8 @@ function is_admin_ip_allowed() {
             return true;
         }
     }
-    return false; // Default: deny external access
+    return false;
+    */
 }
 
 /**
