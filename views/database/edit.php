@@ -68,7 +68,7 @@ function sel($d, $k, $val) { return ($d[$k] ?? '') === $val ? 'selected' : ''; }
 <html lang="id" class="light">
 <head>
     <meta charset="UTF-8">
-    <title>Edit Data | <?= strtoupper($d['nama_lengkap']) ?></title>
+    <title>Edit Data | <?= htmlspecialchars(strtoupper($d['nama_lengkap'] ?? '')) ?></title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -124,7 +124,7 @@ function sel($d, $k, $val) { return ($d[$k] ?? '') === $val ? 'selected' : ''; }
             <i class="fas fa-arrow-left"></i> Kembali
         </a>
         <div class="text-[10px] sm:text-xs text-slate-400 font-extrabold uppercase tracking-widest flex items-center gap-2">
-            TIM DATABASE <span class="hidden sm:inline-block w-1.5 h-1.5 rounded-full bg-indigo-500"></span> <span class="text-indigo-600 hidden sm:inline-block"><?= strtoupper($_SESSION['nama'] ?? 'ADMIN') ?></span>
+            TIM DATABASE <span class="hidden sm:inline-block w-1.5 h-1.5 rounded-full bg-indigo-500"></span> <span class="text-indigo-600 hidden sm:inline-block"><?= htmlspecialchars(strtoupper($_SESSION['nama'] ?? 'ADMIN')) ?></span>
         </div>
     </div>
 
@@ -134,23 +134,23 @@ function sel($d, $k, $val) { return ($d[$k] ?? '') === $val ? 'selected' : ''; }
             <div class="absolute -right-10 -top-10 w-40 h-40 bg-indigo-50 rounded-full blur-2xl pointer-events-none"></div>
 
             <div class="relative z-10">
-                <h1 class="font-outfit text-2xl lg:text-4xl font-black text-slate-900 tracking-tight mb-3"><?= strtoupper($d['nama_lengkap']) ?></h1>
+                <h1 class="font-outfit text-2xl lg:text-4xl font-black text-slate-900 tracking-tight mb-3"><?= htmlspecialchars(strtoupper($d['nama_lengkap'] ?? '')) ?></h1>
 
                 <div class="flex flex-wrap items-center gap-2 mb-5">
-                    <span class="px-3 py-1 bg-indigo-50 border border-indigo-100 text-indigo-700 text-[10px] font-black uppercase tracking-wider rounded-lg"><?= $d['id_pendaftaran'] ?: 'Belum ACC TU' ?></span>
-                    <span class="px-3 py-1 bg-blue-50 border border-blue-100 text-blue-600 text-[10px] font-black uppercase tracking-wider rounded-lg"><?= $d['jurusan'] ?></span>
+                    <span class="px-3 py-1 bg-indigo-50 border border-indigo-100 text-indigo-700 text-[10px] font-black uppercase tracking-wider rounded-lg"><?= htmlspecialchars($d['id_pendaftaran'] ?? 'Belum ACC TU') ?></span>
+                    <span class="px-3 py-1 bg-blue-50 border border-blue-100 text-blue-600 text-[10px] font-black uppercase tracking-wider rounded-lg"><?= htmlspecialchars($d['jurusan'] ?? '') ?></span>
                     <?php if (!empty($d['jurusan_lama'])): ?>
-                    <span class="px-3 py-1 bg-slate-100 border border-slate-200 text-slate-500 text-[10px] font-black uppercase tracking-wider rounded-lg">Ex. <?= $d['jurusan_lama'] ?></span>
+                    <span class="px-3 py-1 bg-slate-100 border border-slate-200 text-slate-500 text-[10px] font-black uppercase tracking-wider rounded-lg">Ex. <?= htmlspecialchars($d['jurusan_lama']) ?></span>
                     <?php endif; ?>
                     <?php if (!empty($d['kelas'])): ?>
-                    <span class="px-3 py-1 bg-purple-50 border border-purple-100 text-purple-600 text-[10px] font-black uppercase tracking-wider rounded-lg">Kls <?= $d['kelas'] ?></span>
+                    <span class="px-3 py-1 bg-purple-50 border border-purple-100 text-purple-600 text-[10px] font-black uppercase tracking-wider rounded-lg">Kls <?= htmlspecialchars($d['kelas']) ?></span>
                     <?php endif; ?>
                 </div>
 
                 <div class="flex items-center gap-3 bg-slate-50 p-2 pr-4 border border-slate-200 rounded-xl w-fit shadow-sm">
                     <span class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest pl-2">Status DU</span>
                     <div class="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
-                        <input type="checkbox" id="du-toggle" <?= $is_du ? 'checked' : '' ?> onchange="toggleDU(this,'<?= $d['id_siswa'] ?>')" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 border-slate-200 appearance-none cursor-pointer z-10 top-0 left-0 transition-all duration-300"/>
+                        <input type="checkbox" id="du-toggle" <?= $is_du ? 'checked' : '' ?> onchange="toggleDU(this,'<?= htmlspecialchars($d['id_siswa']) ?>')" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 border-slate-200 appearance-none cursor-pointer z-10 top-0 left-0 transition-all duration-300"/>
                         <label for="du-toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-slate-200 cursor-pointer transition-colors duration-300"></label>
                     </div>
                     <span id="du-text" class="text-[10px] font-black uppercase tracking-wider <?= $is_du ? 'text-emerald-600' : 'text-slate-400' ?>"><?= $is_du ? 'SUDAH DU' : 'BELUM DU' ?></span>
@@ -173,7 +173,7 @@ function sel($d, $k, $val) { return ($d[$k] ?? '') === $val ? 'selected' : ''; }
         </div>
 
         <form action="proses_crud.php?aksi=edit" method="POST" class="space-y-6">
-            <input type="hidden" name="id_siswa" value="<?= $d['id_siswa'] ?>">
+            <input type="hidden" name="id_siswa" value="<?= htmlspecialchars($d['id_siswa'] ?? '') ?>">
 
             <div class="bg-white border border-slate-200 rounded-[2rem] p-6 lg:p-8 shadow-sm">
                 <div class="flex items-center gap-3 text-indigo-600 text-sm font-black uppercase tracking-[0.1em] mb-6 pb-4 border-b border-slate-100">

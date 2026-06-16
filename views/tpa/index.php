@@ -91,7 +91,7 @@ $total_soal = $total_verbal + $total_numerik + $total_logika;
 // ==========================================
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_jawaban'])) {
     $csrf = $_POST['csrf_token'] ?? '';
-    
+
     if (!verify_csrf_token($csrf)) {
         $error = "Sesi telah habis, silakan ulangi.";
     } else {
@@ -109,7 +109,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_jawaban'])) {
 
                 if ($soal && in_array($jw, ['A', 'B', 'C', 'D'])) {
                     $benar = ($jw === $soal['jawaban_benar']) ? 1 : 0;
-                    
+
                     // Bangun placeholder untuk Prepared Statement
                     $values[] = "(?, ?, ?, ?)";
                     $types .= "iisi";
@@ -132,10 +132,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_jawaban'])) {
         try {
             // 1. Simpan semua jawaban dalam SATU kali eksekusi query
             if (!empty($values)) {
-                $sql = "INSERT INTO tpa_jawaban (id_siswa, id_soal, jawaban_pilih, benar) 
-                        VALUES " . implode(", ", $values) . " 
+                $sql = "INSERT INTO tpa_jawaban (id_siswa, id_soal, jawaban_pilih, benar)
+                        VALUES " . implode(", ", $values) . "
                         ON DUPLICATE KEY UPDATE jawaban_pilih = VALUES(jawaban_pilih), benar = VALUES(benar)";
-                
+
                 $stmt = mysqli_prepare($conn, $sql);
                 if ($stmt) {
                     mysqli_stmt_bind_param($stmt, $types, ...$params);
@@ -341,18 +341,18 @@ $csrf_token = generate_csrf_token();
 
         function updateTimer() {
             if (isSubmitting) return;
-            if (remaining <= 0) { 
+            if (remaining <= 0) {
                 isSubmitting = true;
                 alert("Waktu ujian telah habis! Sistem akan menyimpan jawaban Anda secara otomatis.");
-                formEl.submit(); 
-                return; 
+                formEl.submit();
+                return;
             }
-            
+
             remaining--;
             const m = Math.floor(remaining / 60);
             const s = remaining % 60;
             timerEl.textContent = String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
-            
+
             // Visual Warning jika waktu sisa < 5 Menit
             if (remaining <= 300 && !timerContainer.classList.contains('warning')) {
                 timerContainer.classList.add('warning');
@@ -367,10 +367,10 @@ $csrf_token = generate_csrf_token();
         function showTab(tab) {
             tabs.forEach(t => document.getElementById('section-' + t).classList.add('hidden'));
             document.getElementById('section-' + tab).classList.remove('hidden');
-            
+
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.querySelector('[data-tab="' + tab + '"]').classList.add('active');
-            
+
             current = tab;
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
@@ -384,34 +384,38 @@ $csrf_token = generate_csrf_token();
             if (i > 0) showTab(tabs[i - 1]);
         }
 
-        // Marking & Progress Calculation
+        // Marking & Progress Calculation (SUDAH DIPERBAIKI)
         function markAnswer(sid, radio) {
             const numEl = document.getElementById('num-' + sid);
             numEl.classList.add('answered');
-            
+
             const label = radio.closest('.option-btn');
             const group = label.closest('.space-y-2');
-            
+
             // Reset others in the group
             group.querySelectorAll('.option-btn').forEach(l => {
                 l.classList.remove('selected');
-                const sp = l.querySelector('span:first-child');
-                sp.className = 'w-8 h-8 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center font-bold text-sm transition-colors';
+                const sp = l.querySelector('span'); // PERBAIKAN DI SINI
+                if(sp) {
+                    sp.className = 'w-8 h-8 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center font-bold text-sm transition-colors';
+                }
             });
-            
+
             // Set active
             label.classList.add('selected');
-            const span = label.querySelector('span:first-child');
+            const span = label.querySelector('span'); // PERBAIKAN DI SINI
             const bgColor = current === 'verbal' ? 'bg-blue-600' : current === 'numerik' ? 'bg-emerald-600' : 'bg-amber-500';
-            span.className = `w-8 h-8 rounded-lg ${bgColor} text-white flex items-center justify-center font-bold text-sm transition-colors`;
-            
+            if(span) {
+                span.className = `w-8 h-8 rounded-lg ${bgColor} text-white flex items-center justify-center font-bold text-sm transition-colors`;
+            }
+
             updateCount();
         }
 
         function updateCount() {
             const totalAnswered = document.querySelectorAll('input[type="radio"]:checked').length;
             const totalSoal = <?= $total_soal ?>;
-            
+
             document.getElementById('answered-count').textContent = totalAnswered + '/' + totalSoal;
             const percentage = totalSoal > 0 ? (totalAnswered / totalSoal * 100) : 0;
             document.getElementById('progress-fill').style.width = percentage + '%';
@@ -422,7 +426,7 @@ $csrf_token = generate_csrf_token();
         // Konfirmasi Submit
         formEl.addEventListener('submit', function(e) {
             if (isSubmitting) return; // Prevent double trigger if timer just hits 0
-            
+
             const c = document.querySelectorAll('input[type="radio"]:checked').length;
             if (c < <?= $total_soal ?>) {
                 if (!confirm(`Kamu baru menjawab ${c} dari <?= $total_soal ?> soal. Yakin ingin mengakhiri ujian sekarang?`)) {
@@ -435,7 +439,7 @@ $csrf_token = generate_csrf_token();
                     return;
                 }
             }
-            
+
             isSubmitting = true;
             document.querySelector('.btn-submit').innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Menyimpan...';
         });

@@ -416,15 +416,15 @@ $admin_nama = $_SESSION['nama'] ?? 'Admin';
                             </div>
 
                             <div class="text-center text-[10px] text-slate-500">
-                                <?= $tanggal ?>
+                                <?= htmlspecialchars($tanggal) ?>
                             </div>
 
                             <div class="flex items-center justify-end gap-1.5">
                                 <?php if($s['tpa_selesai'] == 1): ?>
                                     <form method="POST" class="inline">
-                                        <input type="hidden" name="csrf_token" value="<?= $csrf_token ?>">
-                                        <input type="hidden" name="id_siswa" value="<?= $s['id_siswa'] ?>">
-                                        <button type="submit" name="reset_single" onclick="return confirm('Reset TPA untuk:\n\n<?= addslashes($s['nama_lengkap']) ?>\n\nNilai dan jawaban akan dihapus. Siswa bisa mengerjakan TPA ulang.');" class="w-9 h-9 rounded-xl bg-red-50 border border-red-200 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center transition-all shadow-sm" title="Reset TPA">
+                                        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token) ?>">
+                                        <input type="hidden" name="id_siswa" value="<?= htmlspecialchars($s['id_siswa'] ?? '') ?>">
+                                        <button type="submit" name="reset_single" onclick="return confirm('Reset TPA untuk:\n\n<?= addslashes(htmlspecialchars($s['nama_lengkap'] ?? '')) ?>\n\nNilai dan jawaban akan dihapus. Siswa bisa mengerjakan TPA ulang.');" class="w-9 h-9 rounded-xl bg-red-50 border border-red-200 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center transition-all shadow-sm" title="Reset TPA">
                                             <i class="fas fa-redo text-xs"></i>
                                         </button>
                                     </form>
@@ -450,10 +450,10 @@ $admin_nama = $_SESSION['nama'] ?? 'Admin';
     <script>
     // Tampilkan success message dari URL
     const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('success') === '1' && '<?= addslashes($success_msg) ?>') {
+    if (urlParams.get('success') === '1' && '<?= addslashes(htmlspecialchars($success_msg ?? '')) ?>') {
         Swal.fire({
             title: '<span class="text-2xl font-black text-emerald-600 tracking-tight">Berhasil!</span>',
-            html: '<div class="text-slate-500 font-medium text-sm"><?= addslashes($success_msg) ?></div>',
+            html: '<div class="text-slate-500 font-medium text-sm"><?= addslashes(htmlspecialchars($success_msg ?? '')) ?></div>',
             icon: 'success',
             iconColor: '#10b981',
             confirmButtonColor: '#4f46e5',

@@ -104,11 +104,28 @@ function record_login_attempt($conn, $username, $success = false) {
 // ==========================================
 /**
  * Check if current IP is allowed for admin access
- * Updated 2026-06-10: IP restriction DISABLED — allow all IPs for flexibility
+ * Updated 2026-06-16: IP restriction ENABLED for internal network only
  * @return bool
  */
 function is_admin_ip_allowed() {
-    return true; // Semua IP diizinkan
+    // Allow only internal network and localhost
+    $allowed_ips = [
+        '127.0.0.1',
+        '::1',
+        '192.168.',
+        '10.',
+        '172.16.',
+        '172.17.',
+        '172.18.',
+        '172.19.',
+    ];
+    $client_ip = get_client_ip();
+    foreach ($allowed_ips as $ip) {
+        if (strpos($client_ip, $ip) === 0) {
+            return true;
+        }
+    }
+    return false; // Default: deny external access
 }
 
 /**
@@ -403,9 +420,16 @@ function kirim_wa_template($conn, $kode_template, $payload, $no_hp) {
     // =============================================
     // KIRIM VIA EVO API LANGSUNG (tanpa N8N)
     // =============================================
-    $evo_instance = $_ENV['EVO_INSTANCE'] ?? 'Pasundan2';
-    $evo_apikey = $_ENV['EVO_API_KEY'] ?? 'Andika06';
-    $evo_base_url = $_ENV['EVO_BASE_URL'] ?? 'http://172.16.0.180:8080';
+    // WAJIB: Set environment variables untuk production
+    $evo_instance = $_ENV['EVO_INSTANCE'] ?? '';
+    $evo_apikey = $_ENV['EVO_API_KEY'] ?? '';
+    $evo_base_url = $_ENV['EVO_BASE_URL'] ?? '';
+
+    // Jika tidak ada konfigurasi, skip pengiriman
+    if (empty($evo_instance) || empty($evo_apikey) || empty($evo_base_url)) {
+        error_log("EVO API: Configuration missing - WA not sent to $no_hp");
+        return false;
+    }
 
     $evo_url = rtrim($evo_base_url, '/') . "/message/sendText/$evo_instance";
 
