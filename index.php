@@ -436,13 +436,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cek_status'])) {
         </div>
     </section>
 
-    <?php $wa_admin = $_ENV['WA_ADMIN'] ?? '6280000000000'; ?>
-    <a href="https://wa.me/<?= $wa_admin ?>?text=Halo%20Bang%20Jangkrik,%20mau%20konsultasi%20PPDB!" target="_blank" class="fixed bottom-6 right-6 z-50 group flex flex-col items-end gap-2 animate-float">
+    <?php $wa_admin = $_ENV['WA_ADMIN'] ?? '6283817203455'; ?>
+    <!-- WhatsApp Contact Button - Professional Style -->
+    <a href="https://wa.me/<?= $wa_admin ?>?text=Halo%20Admin%20SPMB%20SMK%20Pasundan%202,%20saya%20ingin%20konsultasi%20mengenai%20pendaftaran!" target="_blank" class="fixed bottom-6 right-6 z-50 group flex flex-col items-end gap-2 animate-float">
         <div class="opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 bg-white border border-slate-200 text-slate-800 text-xs font-bold px-4 py-3 rounded-2xl rounded-br-none shadow-xl">
-            <span class="text-amber-600">Minta wangsit jurusan?</span><br>Tanya Bang Jangkrik sini! 🦗🔮
+            <span class="text-emerald-600">Butuh bantuan?</span><br>Hubungi admin sekarang!
         </div>
-        <div class="w-16 h-16 bg-gradient-to-tr from-green-500 to-emerald-400 hover:from-green-400 hover:to-emerald-300 rounded-full flex items-center justify-center shadow-2xl border-4 border-white transition-transform duration-300 transform group-hover:scale-110 group-hover:rotate-12 cursor-pointer relative">
-            <span class="text-3xl filter drop-shadow-md">🦗</span>
+        <div class="w-16 h-16 bg-gradient-to-tr from-green-500 to-emerald-400 hover:from-green-400 hover:to-emerald-300 rounded-full flex items-center justify-center shadow-2xl border-4 border-white transition-transform duration-300 transform group-hover:scale-110 cursor-pointer relative">
+            <i class="fab fa-whatsapp text-3xl text-white"></i>
             <div class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 border-2 border-white rounded-full animate-pulse"></div>
         </div>
     </a>
