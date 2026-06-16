@@ -3,7 +3,7 @@
  * TPA HERO SELECT - SMK Pasundan 2 Bandung
  * Gamified Hero Selection - MMORPG Style
  */
-//session_start();
+session_start();
 include '../../config.php';
 
 // Check: harus sudah login TPA (dari login.php)
@@ -147,10 +147,15 @@ $default_hero = $heroes[$kode_jurusan] ?? $heroes['TPM'];
 // Handle pemilihan hero
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['select_hero'])) {
     $hero_id = mysqli_real_escape_string($conn, $_POST['hero_id'] ?? '');
+
+    // Simpan hero yang dipilih
     $_SESSION['tpa_hero'] = $heroes[$hero_id] ?? $default_hero;
 
-    // Gunakan JavaScript Redirect sebagai backup aman jika header bermasalah
-    echo "<script>window.location.href='index.php';</script>";
+    // Log untuk debugging
+    error_log("hero_select: POST received, hero_id=$hero_id, redirecting to index.php");
+
+    // Redirect menggunakan PHP header (lebih reliable dari JavaScript)
+    header("Location: index.php");
     exit();
 }
 ?>
