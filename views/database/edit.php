@@ -15,8 +15,24 @@ if (!isset($_SESSION['role']) || !in_array(strtolower($_SESSION['role']), ['data
     exit();
 }
 
-$id = mysqli_real_escape_string($conn, $_GET['id'] ?? '');
-$d  = mysqli_fetch_assoc(mysqli_query($conn, "SELECT * FROM siswa WHERE id_siswa='$id'"));
+$id = (int)($_GET['id'] ?? 0);
+if ($id <= 0) {
+    die("
+        <div style='font-family: sans-serif; text-align: center; padding: 50px; background: #f8fafc; color: #334155; height: 100vh;'>
+            <h1 style='font-size: 4rem; margin-bottom: 10px;'>🔍</h1>
+            <h2>ID Tidak Valid</h2>
+            <p>Parameter ID tidak valid atau tidak ditemukan.</p>
+            <a href='index.php' style='display: inline-block; margin-top: 20px; padding: 10px 20px; background: #4f46e5; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;'>Kembali ke Dasbor</a>
+        </div>
+    ");
+}
+
+$stmt = mysqli_prepare($conn, "SELECT * FROM siswa WHERE id_siswa=?");
+mysqli_stmt_bind_param($stmt, "i", $id);
+mysqli_stmt_execute($stmt);
+$result = mysqli_stmt_get_result($stmt);
+$d = mysqli_fetch_assoc($result);
+mysqli_stmt_close($stmt);
 
 // FIX HTTP 500: Menghapus error spasi siluman dan fungsi tak terdefinisi
 if (!$d) {
@@ -169,11 +185,12 @@ function sel($d, $k, $val) { return ($d[$k] ?? '') === $val ? 'selected' : ''; }
 
         <div class="bg-blue-50 border border-blue-100 p-4 rounded-2xl mb-8 flex gap-3 text-sm text-blue-800 shadow-sm">
             <i class="fas fa-info-circle text-blue-500 mt-0.5"></i>
-            <p><b>Referensi Awal:</b> WA <b><?= $d['no_hp'] ?></b> &bull; Asal: <b><?= htmlspecialchars($d['asal_sekolah']) ?></b> &bull; Alamat: <?= htmlspecialchars($d['kelurahan']) ?>, <?= htmlspecialchars($d['kecamatan']) ?> RT<?= $d['rt'] ?>/RW<?= $d['rw'] ?></p>
+            <p><b>Referensi Awal:</b> WA <b><?= htmlspecialchars($d['no_hp'] ?? '') ?></b> &bull; Asal: <b><?= htmlspecialchars($d['asal_sekolah'] ?? '') ?></b> &bull; Alamat: <?= htmlspecialchars($d['kelurahan'] ?? '') ?>, <?= htmlspecialchars($d['kecamatan'] ?? '') ?> RT<?= htmlspecialchars($d['rt'] ?? '') ?>/RW<?= htmlspecialchars($d['rw'] ?? '') ?></p>
         </div>
 
         <form action="proses_crud.php?aksi=edit" method="POST" class="space-y-6">
             <input type="hidden" name="id_siswa" value="<?= htmlspecialchars($d['id_siswa'] ?? '') ?>">
+            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(generate_csrf_token()) ?>">
 
             <div class="bg-white border border-slate-200 rounded-[2rem] p-6 lg:p-8 shadow-sm">
                 <div class="flex items-center gap-3 text-indigo-600 text-sm font-black uppercase tracking-[0.1em] mb-6 pb-4 border-b border-slate-100">
