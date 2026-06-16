@@ -4,6 +4,7 @@
  * SMK Pasundan 2 Bandung
  * Halaman untuk committee melihat & reset hasil TPA
  */
+ob_start(); // Mengamankan redirect header dari spasi/output tidak sengaja
 include '../../config.php';
 
 // Proteksi: harus login
@@ -19,13 +20,22 @@ if (!in_array($_SESSION['role'], $allowed_roles)) {
     exit();
 }
 
-// Handle Reset TPA
+// Definisi daftar jurusan untuk filter drop-down agar tidak undefined variable
+$jurusan_list = [
+    'TPM' => 'Teknik Pemesinan',
+    'TKR' => 'Teknik Kendaraan Ringan',
+    'TSM' => 'Teknik Sepeda Motor',
+    'TKJ' => 'Teknik Komputer & Jaringan',
+    'TAV' => 'Teknik Audio Video'
+];
+
+// Handle Reset TPA Siswa Individu
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset_tpa'])) {
     $csrf = $_POST['csrf_token'] ?? '';
     if (verify_csrf_token($csrf)) {
         $id_siswa = (int)($_POST['id_siswa'] ?? 0);
         if ($id_siswa > 0) {
-            // Reset TPA siswa
+            // Reset TPA status dan nilai siswa di tabel siswa
             mysqli_query($conn, "UPDATE siswa SET
                 tpa_selesai = 0,
                 tpa_tanggal = NULL,
@@ -35,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset_tpa'])) {
                 tpa_benar_logika = NULL
                 WHERE id_siswa = $id_siswa");
 
-            // Hapus jawaban
+            // Hapus log jawaban lama di tabel tpa_jawaban
             mysqli_query($conn, "DELETE FROM tpa_jawaban WHERE id_siswa = $id_siswa");
 
             $_SESSION['success_message'] = 'TPA siswa berhasil di-reset!';
@@ -45,11 +55,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset_tpa'])) {
     exit();
 }
 
-// Handle Bulk Reset
+// Handle Bulk Reset (Semua Siswa)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_reset'])) {
     $csrf = $_POST['csrf_token'] ?? '';
     if (verify_csrf_token($csrf)) {
-        // Reset semua TPA yang sudah selesai
+        // Reset semua status siswa yang sudah menyelesaikan TPA
         mysqli_query($conn, "UPDATE siswa SET
             tpa_selesai = 0,
             tpa_tanggal = NULL,
@@ -59,25 +69,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_reset'])) {
             tpa_benar_logika = NULL
             WHERE tpa_selesai = 1");
 
-        // Hapus semua jawaban
+        // Kosongkan seluruh isi tabel jawaban
         mysqli_query($conn, "TRUNCATE TABLE tpa_jawaban");
 
-        $_SESSION['success_message'] = 'Semua TPA berhasil di-reset!';
+        $_SESSION['success_message'] = 'Semua data TPA siswa berhasil di-reset!';
     }
     header("Location: " . $_SERVER['PHP_SELF']);
     exit();
 }
 
-// Tampilkan success message jika ada
+// Tampilkan success message jika tersedia
 $success_msg = $_SESSION['success_message'] ?? '';
 unset($_SESSION['success_message']);
 
-// Ambil filter
+// Ambil parameter filter & sanitasi data masukan
 $filter_jurusan = isset($_GET['jurusan']) ? mysqli_real_escape_string($conn, $_GET['jurusan']) : '';
 $filter_status = isset($_GET['status']) ? mysqli_real_escape_string($conn, $_GET['status']) : '';
 $search = isset($_GET['search']) ? mysqli_real_escape_string($conn, $_GET['search']) : '';
 
-// Build query - semua siswa yang punya id_pendaftaran
+// Build query data siswa
 $where = ["id_pendaftaran IS NOT NULL AND id_pendaftaran != ''"];
 if ($filter_jurusan) $where[] = "jurusan = '$filter_jurusan'";
 if ($filter_status === 'belum') $where[] = "tpa_selesai != 1";
@@ -94,7 +104,7 @@ $query = "SELECT id_siswa, id_pendaftaran, nama_lengkap, jurusan, asal_sekolah,
 
 $results = mysqli_query($conn, $query);
 
-// Statistik - semua siswa yang punya id_pendaftaran
+// Kumpulkan data Statistik Ringkas
 $stats_query = mysqli_query($conn, "SELECT
     COUNT(CASE WHEN tpa_selesai = 1 THEN 1 END) as sudah_tpa,
     COUNT(CASE WHEN tpa_selesai != 1 OR tpa_selesai IS NULL THEN 1 END) as belum_tpa,
@@ -121,7 +131,6 @@ $csrf_token = generate_csrf_token();
     </style>
 </head>
 <body class="bg-slate-900 text-white min-h-screen">
-    <!-- Header -->
     <header class="sticky top-0 z-50 bg-slate-900/95 backdrop-blur-xl border-b border-white/10">
         <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
             <div class="flex items-center gap-4">
@@ -165,7 +174,6 @@ $csrf_token = generate_csrf_token();
     </header>
 
     <main class="max-w-7xl mx-auto px-4 py-6">
-        <!-- Success Message -->
         <?php if ($success_msg): ?>
         <div class="mb-6 p-4 bg-emerald-500/20 border border-emerald-500/30 rounded-xl text-emerald-400 flex items-center gap-3">
             <i class="fas fa-check-circle text-xl"></i>
@@ -173,7 +181,6 @@ $csrf_token = generate_csrf_token();
         </div>
         <?php endif; ?>
 
-        <!-- Statistik Cards -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             <div class="bg-slate-800/50 border border-white/10 rounded-xl p-4">
                 <div class="text-xs text-slate-400 uppercase tracking-wider mb-1">Sudah TPA</div>
@@ -189,15 +196,13 @@ $csrf_token = generate_csrf_token();
             </div>
             <div class="bg-slate-800/50 border border-white/10 rounded-xl p-4">
                 <div class="text-xs text-slate-400 uppercase tracking-wider mb-1">Range Nilai</div>
-                <div class="text-2xl font-bold text-purple-400"><?= $stats['min_nilai'] ?? 0 ?> - <?= $stats['max_nilai'] ?? 0 ?></div>
+                <div class="text-2xl font-bold text-purple-400"><?= ($stats['min_nilai'] ?? 0) . " - " . ($stats['max_nilai'] ?? 0) ?></div>
             </div>
         </div>
 
-        <!-- Filter & Actions -->
         <div class="bg-slate-800/50 border border-white/10 rounded-xl p-4 mb-6">
             <div class="flex flex-col lg:flex-row gap-4 items-start lg:items-end justify-between">
                 <form method="GET" class="flex flex-wrap gap-4 items-end flex-1">
-                    <!-- Search -->
                     <div class="flex-1 min-w-[200px]">
                         <label class="block text-xs text-slate-400 mb-1">
                             <i class="fas fa-search mr-1"></i>Cari Nama / ID
@@ -207,7 +212,6 @@ $csrf_token = generate_csrf_token();
                                class="w-full bg-slate-700 border border-white/10 rounded-lg px-4 py-2 text-sm focus:border-indigo-500 focus:outline-none">
                     </div>
 
-                    <!-- Jurusan -->
                     <div>
                         <label class="block text-xs text-slate-400 mb-1">Jurusan</label>
                         <select name="jurusan" class="bg-slate-700 border border-white/10 rounded-lg px-3 py-2 text-sm">
@@ -218,7 +222,6 @@ $csrf_token = generate_csrf_token();
                         </select>
                     </div>
 
-                    <!-- Status -->
                     <div>
                         <label class="block text-xs text-slate-400 mb-1">Status TPA</label>
                         <select name="status" class="bg-slate-700 border border-white/10 rounded-lg px-3 py-2 text-sm">
@@ -231,14 +234,13 @@ $csrf_token = generate_csrf_token();
                     <button type="submit" class="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 rounded-lg text-sm font-bold transition">
                         <i class="fas fa-filter mr-1"></i> Filter
                     </button>
-                    <a href="index.php" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm font-bold transition">
+                    <a href="<?= $_SERVER['PHP_SELF'] ?>" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm font-bold transition">
                         Reset
                     </a>
                 </form>
 
-                <!-- Bulk Actions -->
                 <?php if (in_array($_SESSION['role'], ['superuser', 'pendaftaran'])): ?>
-                <form method="POST" onsubmit="return confirm('PERINGATAN: Semua data TPA akan dihapus!\n\nApakah Anda yakin ingin reset semua TPA?');">
+                <form method="POST" onsubmit="return confirm('PERINGATAN KELAS BERAT: Semua log jawaban dan nilai TPA siswa akan dibersihkan tanpa sisa!\n\nApakah Anda benar-benar yakin?');">
                     <input type="hidden" name="csrf_token" value="<?= $csrf_token ?>">
                     <button type="submit" name="bulk_reset" class="px-4 py-2 bg-red-500/20 border border-red-500/30 hover:bg-red-500/30 rounded-lg text-sm font-bold text-red-400 transition">
                         <i class="fas fa-trash mr-1"></i> Reset Semua TPA
@@ -248,7 +250,6 @@ $csrf_token = generate_csrf_token();
             </div>
         </div>
 
-        <!-- Table -->
         <div class="bg-slate-800/50 border border-white/10 rounded-xl overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">
@@ -276,7 +277,7 @@ $csrf_token = generate_csrf_token();
                             $nilai_logika = $row['tpa_jumlah_soal_logika'] > 0 && $row['tpa_benar_logika'] !== null
                                 ? round(($row['tpa_benar_logika'] / $row['tpa_jumlah_soal_logika']) * 100) : '-';
 
-                            // Color based on score
+                            // Pewarnaan dinamis berdasarkan range skor total
                             if ($row['tpa_nilai_total'] >= 80) $color = 'text-emerald-400';
                             elseif ($row['tpa_nilai_total'] >= 65) $color = 'text-blue-400';
                             elseif ($row['tpa_nilai_total'] >= 50) $color = 'text-amber-400';
@@ -337,7 +338,7 @@ $csrf_token = generate_csrf_token();
                                        class="px-2 py-1.5 bg-amber-500/20 border border-amber-500/30 rounded text-xs font-bold text-amber-400 hover:bg-amber-500/30 transition" title="Sertifikat">
                                         <i class="fas fa-scroll"></i>
                                     </a>
-                                    <a href="card.php?id=<?= $row['id_siswa'] ?>" target="_blank"
+                                    <a href="card.php?id=<?= $row['id_siswa'] ?>&preview=1" target="_blank"
                                        class="px-2 py-1.5 bg-indigo-500/20 border border-indigo-500/30 rounded text-xs font-bold text-indigo-400 hover:bg-indigo-500/30 transition" title="Lihat Card">
                                         <i class="fas fa-medal"></i>
                                     </a>
@@ -347,8 +348,7 @@ $csrf_token = generate_csrf_token();
                                     </a>
 
                                     <?php if (in_array($_SESSION['role'], ['superuser', 'pendaftaran'])): ?>
-                                    <!-- Reset Button (hanya superuser & pendaftaran) -->
-                                    <form method="POST" onsubmit="return confirm('Reset TPA untuk <?= htmlspecialchars($row['nama_lengkap']) ?>?\n\nJawaban dan nilai akan dihapus.');" class="inline">
+                                    <form method="POST" onsubmit="return confirm('Reset TPA untuk siswa <?= htmlspecialchars($row['nama_lengkap']) ?>?\n\nRiwayat jawaban dan nilai total siswa ini akan dibersihkan.');" class="inline">
                                         <input type="hidden" name="csrf_token" value="<?= $csrf_token ?>">
                                         <input type="hidden" name="id_siswa" value="<?= $row['id_siswa'] ?>">
                                         <button type="submit" name="reset_tpa"
@@ -358,10 +358,9 @@ $csrf_token = generate_csrf_token();
                                     </form>
                                     <?php endif; ?>
                                     <?php else: ?>
-                                    <!-- Belum TPA - Force Login -->
                                     <?php if (in_array($_SESSION['role'], ['superuser', 'pendaftaran', 'user'])): ?>
                                     <a href="index.php?force_login=<?= $row['id_siswa'] ?>"
-                                       class="px-2 py-1.5 bg-emerald-500/20 border border-emerald-500/30 rounded text-xs font-bold text-emerald-400 hover:bg-emerald-500/30 transition" title="Buka TPA">
+                                       class="px-2 py-1.5 bg-emerald-500/20 border border-emerald-500/30 rounded text-xs font-bold text-emerald-400 hover:bg-emerald-500/30 transition" title="Buka TPA via Force Login">
                                         <i class="fas fa-external-link-alt"></i>
                                     </a>
                                     <?php endif; ?>
@@ -374,7 +373,7 @@ $csrf_token = generate_csrf_token();
                         <tr>
                             <td colspan="9" class="px-4 py-12 text-center text-slate-500">
                                 <i class="fas fa-inbox text-4xl mb-3"></i>
-                                <p>Belum ada data siswa dengan kriteria tersebut</p>
+                                <p>Tidak ditemukan records siswa dengan kriteria filter tersebut.</p>
                             </td>
                         </tr>
                         <?php endif; ?>
@@ -383,19 +382,20 @@ $csrf_token = generate_csrf_token();
             </div>
         </div>
 
-        <!-- Info -->
         <div class="mt-6 p-4 bg-slate-800/50 border border-white/10 rounded-xl text-sm text-slate-400">
             <div class="flex items-center gap-2 mb-2">
                 <i class="fas fa-info-circle text-indigo-400"></i>
-                <span class="font-bold text-white">Informasi</span>
+                <span class="font-bold text-white">Panduan Manajemen Ujian</span>
             </div>
             <ul class="space-y-1 text-xs">
-                <li>• <strong>Semua siswa</strong> yang memiliki ID Pendaftaran dapat mengikuti TPA</li>
-                <li>• <strong>Reset TPA</strong> hanya bisa dilakukan oleh role <strong>superuser</strong> dan <strong>pendaftaran</strong></li>
-                <li>• Siswa yang di-reset bisa login ulang dan mengerjakan TPA kembali</li>
-                <li>• Link "Buka TPA" membuka halaman TPA siswa di tab baru</li>
+                <li>• Hak istimewa untuk **Reset Nilai TPA** dibatasi hanya untuk level akun <strong>superuser</strong> dan panitia <strong>pendaftaran</strong>.</li>
+                <li>• Tombol pintasan <i class="fas fa-external-link-alt mx-1 text-emerald-400"></i> otomatis membuat tiruan session siswa agar penguji dapat memantau lembar kerja tanpa otentikasi ulang.</li>
+                <li>• Seluruh struktur cetak sertifikasi atau kartu prestasi dilengkapi dengan mode parameter peninjau (`&preview=1`) untuk pengamanan integritas data.</li>
             </ul>
         </div>
     </main>
 </body>
 </html>
+<?php
+ob_end_flush();
+?>

@@ -41,9 +41,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['force_login'])) {
     }
 }
 
-// Ambil semua siswa yang sudah lunas
-$siswa_query = mysqli_query($conn, "SELECT id_siswa, id_pendaftaran, nama_lengkap, jurusan, tpa_selesai, tpa_tanggal
-                                     FROM siswa WHERE status_bayar = 'LUNAS' ORDER BY nama_lengkap");
+// Ambil semua siswa (tanpa filter pembayaran)
+$siswa_query = mysqli_query($conn, "SELECT id_siswa, id_pendaftaran, nama_lengkap, jurusan, status_bayar, tpa_selesai, tpa_tanggal
+                                     FROM siswa ORDER BY nama_lengkap");
 $csrf_token = generate_csrf_token();
 ?>
 <!DOCTYPE html>
@@ -139,6 +139,9 @@ $csrf_token = generate_csrf_token();
                             <div class="text-xs text-slate-400">
                                 <?= htmlspecialchars($siswa['id_pendaftaran']) ?> •
                                 <?= htmlspecialchars($siswa['jurusan']) ?>
+                                <span class="ml-2 <?= $siswa['status_bayar'] === 'LUNAS' ? 'text-emerald-400' : 'text-amber-400' ?>">
+                                    (<?= $siswa['status_bayar'] ?>)
+                                </span>
                             </div>
                         </div>
                     </div>

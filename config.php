@@ -277,4 +277,239 @@ function redirect_with_status($url, $status) {
     header("Location: $url?status=$status");
     exit;
 }
-?>
+
+// ============================================================
+// WHATSAPP TEMPLATE SYSTEM
+// Functions for rendering and sending templated WA messages
+// ============================================================
+
+/**
+ * Render template dengan placeholder
+ * @param string $template Template dengan placeholder {PLACEHOLDER}
+ * @param array $data Associative array placeholder => nilai
+ * @return string Template yang sudah dirender
+ */
+function render_wa_template($template, $data) {
+    $result = $template;
+    foreach ($data as $key => $value) {
+        // Handle case-insensitive placeholders
+        $result = str_replace('{' . strtoupper($key) . '}', $value ?? '', $result);
+        $result = str_replace('{' . $key . '}', $value ?? '', $result);
+    }
+    // Convert literal \n escape sequences to actual newlines
+    $result = str_replace('\\n', "\n", $result);
+    return $result;
+}
+
+/**
+ * Load template dari database
+ * @param mysqli $conn Koneksi database
+ * @param string $kode_template Kode template
+ * @param bool $active_only Hanya yang aktif
+ * @return array|null Data template atau null jika tidak ditemukan
+ */
+function load_wa_template($conn, $kode_template, $active_only = true) {
+    $where = $active_only ? "AND is_active = TRUE" : "";
+    $sql = "SELECT * FROM wa_templates WHERE kode_template = ? $where LIMIT 1";
+    $stmt = mysqli_prepare($conn, $sql);
+    if (!$stmt) return null;
+    mysqli_stmt_bind_param($stmt, "s", $kode_template);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+    return mysqli_fetch_assoc($result) ?: null;
+}
+
+/**
+ * Get all templates (optionally filtered by jenis)
+ * @param mysqli $conn Koneksi database
+ * @param string|null $jenis Filter by jenis, null for all
+ * @param bool $active_only Hanya yang aktif
+ * @return array List of templates
+ */
+function get_all_wa_templates($conn, $jenis = null, $active_only = false) {
+    $where = "";
+    $params = [];
+    $types = "";
+    
+    if ($jenis) {
+        $where .= " AND jenis = ?";
+        $params[] = $jenis;
+        $types .= "s";
+    }
+    if ($active_only) {
+        $where .= " AND is_active = TRUE";
+    }
+    
+    if (empty($where)) {
+        $sql = "SELECT * FROM wa_templates ORDER BY jenis, nama_template";
+    } else {
+        $sql = "SELECT * FROM wa_templates WHERE 1=1 $where ORDER BY jenis, nama_template";
+    }
+    
+    if (!empty($params)) {
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param($stmt, $types, ...$params);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+    } else {
+        $result = mysqli_query($conn, $sql);
+    }
+    
+    $templates = [];
+    while ($row = mysqli_fetch_assoc($result)) {
+        $templates[] = $row;
+    }
+    return $templates;
+}
+
+/**
+ * Format nomor HP ke format WhatsApp internasional
+ * @param string $no_hp Nomor HP
+ * @return string Nomor HP format 62xxx
+ */
+function format_wa_number($no_hp) {
+    $no_hp = preg_replace('/[^0-9]/', '', $no_hp);
+    if (substr($no_hp, 0, 1) == '0') {
+        $no_hp = '62' . substr($no_hp, 1);
+    }
+    // Ensure starts with 62
+    if (substr($no_hp, 0, 2) != '62') {
+        $no_hp = '62' . $no_hp;
+    }
+    return $no_hp;
+}
+
+/**
+ * Kirim pesan WA via EVO API langsung (bypass N8N)
+ * @param mysqli $conn Koneksi database
+ * @param string $kode_template Kode template
+ * @param array $payload Data untuk placeholder
+ * @param string $no_hp Nomor HP tujuan
+ * @return bool True jika sukses
+ */
+function kirim_wa_template($conn, $kode_template, $payload, $no_hp) {
+    $template = load_wa_template($conn, $kode_template);
+    if (!$template) {
+        error_log("WA Template not found: $kode_template");
+        return false;
+    }
+
+    // Render template dengan data
+    $rendered_message = render_wa_template($template['template_text'], $payload);
+
+    // Pastikan UTF-8 encoding
+    $rendered_message = mb_convert_encoding($rendered_message, 'UTF-8', 'UTF-8');
+
+    // =============================================
+    // KIRIM VIA EVO API LANGSUNG (tanpa N8N)
+    // =============================================
+    $evo_instance = $_ENV['EVO_INSTANCE'] ?? 'Pasundan2';
+    $evo_apikey = $_ENV['EVO_API_KEY'] ?? 'Andika06';
+    $evo_base_url = $_ENV['EVO_BASE_URL'] ?? 'http://172.16.0.180:8080';
+
+    $evo_url = rtrim($evo_base_url, '/') . "/message/sendText/$evo_instance";
+
+    // Format Evolution API v2
+    $evo_data = [
+        'number' => $no_hp,
+        'textMessage' => [
+            'text' => $rendered_message
+        ]
+    ];
+
+    $ch = curl_init($evo_url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($evo_data, JSON_UNESCAPED_UNICODE));
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'Content-Type: application/json; charset=utf-8',
+        'apikey: ' . $evo_apikey
+    ]);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 15);
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+
+    $response = curl_exec($ch);
+    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curl_error = curl_error($ch);
+    curl_close($ch);
+
+    // Log untuk debugging
+    if ($http_code == 200 || $http_code == 201) {
+        error_log("WA Sent via EVO: $no_hp - Template: $kode_template");
+        return true;
+    } else {
+        error_log("WA FAILED via EVO: $no_hp - HTTP: $http_code - Error: $curl_error - Response: $response");
+        return false;
+    }
+}
+
+/**
+ * Preview template dengan sample data
+ * @param string $template_text Template text
+ * @param string $jenis Jenis template untuk sample data
+ * @return string Rendered preview
+ */
+function preview_wa_template($template_text, $jenis = 'acc') {
+    $sample_data = [
+        'acc' => [
+            'nama' => 'Budi Santoso',
+            'id_daftar' => 'SPMB26-001',
+            'sekolah' => 'SMP Negeri 1 Bandung',
+            'jurusan' => 'Teknik Kendaraan Ringan',
+            'admin' => 'Admin Sistem',
+            'tanggal' => '16/06/2026 14:30',
+            'gelombang' => 'Gelombang 1',
+            'biaya' => '150.000'
+        ],
+        'daftar_ulang' => [
+            'nama' => 'Ani Wijaya',
+            'id_daftar' => 'SPMB26-002',
+            'admin' => 'Petugas TU',
+            'tanggal' => '16/06/2026 15:00'
+        ],
+        'pindah_jurusan' => [
+            'nama' => 'Dewi Lestari',
+            'jurusan_lama' => 'TKR',
+            'jurusan_baru' => 'TPM',
+            'alasan' => 'Minat dan bakat di bidang permesinan',
+            'admin' => 'Tim Database',
+            'tanggal' => '16/06/2026 10:00'
+        ],
+        'cabut' => [
+            'nama' => 'Eko Prasetyo',
+            'alasan' => 'Memilih sekolah lain',
+            'admin' => 'Tim Database',
+            'tanggal' => '16/06/2026 09:00'
+        ],
+        'reminder' => [
+            'nama' => 'Fajar Nugroho',
+            'gelombang' => 'Gelombang 2',
+            'biaya' => '175.000',
+            'admin' => 'Admin'
+        ]
+    ];
+    
+    $data = $sample_data[$jenis] ?? $sample_data['acc'];
+    return render_wa_template($template_text, $data);
+}
+
+/**
+ * Get placeholder list untuk UI helper
+ * @return array List of available placeholders with descriptions
+ */
+function get_wa_placeholder_list() {
+    return [
+        ['key' => 'NAMA', 'label' => 'Nama Lengkap', 'desc' => 'Nama siswa'],
+        ['key' => 'ID_DAFTAR', 'label' => 'ID Pendaftaran', 'desc' => 'ID registrasi (SPMB26-xxx)'],
+        ['key' => 'JURUSAN', 'label' => 'Jurusan', 'desc' => 'Jurusan yang dipilih'],
+        ['key' => 'JURUSAN_BARU', 'label' => 'Jurusan Baru', 'desc' => 'Jurusan tujuan pindah'],
+        ['key' => 'JURUSAN_LAMA', 'label' => 'Jurusan Lama', 'desc' => 'Jurusan asal pindah'],
+        ['key' => 'ALASAN', 'label' => 'Alasan', 'desc' => 'Alasan perubahan'],
+        ['key' => 'ADMIN', 'label' => 'Admin/Petugas', 'desc' => 'Nama admin yang memproses'],
+        ['key' => 'TANGGAL', 'label' => 'Tanggal', 'desc' => 'Tanggal kejadian'],
+        ['key' => 'SEKOLAH', 'label' => 'Asal Sekolah', 'desc' => 'Sekolah asal siswa'],
+        ['key' => 'NO_HP', 'label' => 'No HP', 'desc' => 'Nomor HP siswa'],
+        ['key' => 'GELOMBANG', 'label' => 'Gelombang', 'desc' => 'Gelombang pendaftaran'],
+        ['key' => 'BIAYA', 'label' => 'Biaya', 'desc' => 'Jumlah biaya pendaftaran']
+    ];
+}

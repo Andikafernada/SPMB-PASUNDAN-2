@@ -1,8 +1,8 @@
 <?php
 /**
- * PROSES UPDATE - CENTRAL COMMAND v3.0 FINAL
+ * PROSES UPDATE - CENTRAL COMMAND v4.0
+ * WhatsApp Template System Integration
  * Aksi: du, du_toggle, pindah_jurusan, cabut, restore
- * Diperbarui: Fix Syntax Error HTTP 500 & Light Mode Error Page
  */
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
@@ -42,22 +42,14 @@ if (!isset($_SESSION['role']) || strtolower($_SESSION['role']) !== 'database') {
 
 $aksi    = $_GET['aksi'] ?? '';
 $id      = mysqli_real_escape_string($conn, $_GET['id'] ?? '');
-$webhook = defined('N8N_WEBHOOK_URL') ? N8N_WEBHOOK_URL : ''; 
 $petugas = $_SESSION['nama'] ?? 'Admin System';
 
 // ============================================================
-// 1. KONFIRMASI DAFTAR ULANG
+// 1. KONFIRMASI DAFTAR ULANG (TANPA WA)
 // ============================================================
 if ($aksi == 'du') {
     mysqli_query($conn, "UPDATE siswa SET status_siswa='SUDAH DAFTAR ULANG' WHERE id_siswa='$id'");
-    $d = mysqli_fetch_assoc(mysqli_query($conn, "SELECT * FROM siswa WHERE id_siswa='$id'"));
-    kirim_n8n($webhook, [
-        'type'   => 'daftar_ulang',
-        'wa'     => $d['no_hp'],
-        'nama'   => strtoupper($d['nama_lengkap']),
-        'id_reg' => $d['id_pendaftaran'],
-        'admin'  => $petugas
-    ]);
+    // CATATAN: DAftar ulang TIDAK kirim WA ke siswa (sesuai kebijakan)
     header("Location: index.php?status=success_du"); exit();
 }
 
@@ -72,7 +64,7 @@ if ($aksi == 'du_toggle') {
 }
 
 // ============================================================
-// 3. PINDAH JURUSAN + HISTORY
+// 3. PINDAH JURUSAN + HISTORY + WA NOTIFIKASI
 // ============================================================
 if ($aksi == 'pindah_jurusan') {
     $baru   = mysqli_real_escape_string($conn, $_GET['jurusan_baru'] ?? '');
@@ -81,6 +73,7 @@ if ($aksi == 'pindah_jurusan') {
 
     if (!$baru || !$lama) { header("Location: index.php?status=error"); exit(); }
 
+    // Create history table if not exists
     mysqli_query($conn, "CREATE TABLE IF NOT EXISTS history_jurusan (
         id_history INT AUTO_INCREMENT PRIMARY KEY,
         id_siswa INT NOT NULL, jurusan_lama VARCHAR(50), jurusan_baru VARCHAR(50),
@@ -93,20 +86,22 @@ if ($aksi == 'pindah_jurusan') {
                          VALUES ('$id','$lama','$baru','$alasan','$petugas')");
 
     $d = mysqli_fetch_assoc(mysqli_query($conn, "SELECT * FROM siswa WHERE id_siswa='$id'"));
-    kirim_n8n($webhook, [
-        'type'         => 'pindah_jurusan',
-        'wa'           => $d['no_hp'],
+    
+    // Kirim WA dengan template system
+    kirim_wa_template($conn, 'PINDAH_JURUSAN', [
         'nama'         => strtoupper($d['nama_lengkap']),
         'jurusan_baru' => $baru,
         'jurusan_lama' => $lama,
         'alasan'       => $alasan,
-        'admin'        => $petugas
-    ]);
+        'admin'        => $petugas,
+        'tanggal'      => date('d/m/Y H:i')
+    ], $d['no_hp']);
+    
     header("Location: index.php?status=success_pindah"); exit();
 }
 
 // ============================================================
-// 4. CABUT BERKAS → ARSIP
+// 4. CABUT BERKAS → ARSIP + WA NOTIFIKASI
 // ============================================================
 if ($aksi == 'cabut') {
     $alasan = mysqli_real_escape_string($conn, $_GET['alasan'] ?? '');
@@ -122,7 +117,7 @@ if ($aksi == 'cabut') {
 
     function se($conn, $v) { return mysqli_real_escape_string($conn, $v ?? ''); }
 
-    // Pastikan kolom arsip ada
+    // Ensure arsip columns exist
     $cols_arsip = [
         "ALTER TABLE arsip_siswa ADD COLUMN IF NOT EXISTS jenis_kelamin VARCHAR(20) DEFAULT NULL",
         "ALTER TABLE arsip_siswa ADD COLUMN IF NOT EXISTS tempat_lahir VARCHAR(100) DEFAULT NULL",
@@ -172,13 +167,15 @@ if ($aksi == 'cabut') {
 
     if (mysqli_query($conn, $sql_arsip)) {
         mysqli_query($conn, "DELETE FROM siswa WHERE id_siswa='$id'");
-        kirim_n8n($webhook, [
-            'type'   => 'cabut_berkas',
-            'wa'     => $s['no_hp'],
-            'nama'   => strtoupper($s['nama_lengkap']),
-            'alasan' => $alasan,
-            'admin'  => $petugas
-        ]);
+        
+        // Kirim WA dengan template system
+        kirim_wa_template($conn, 'CABUT_BERKAS', [
+            'nama'    => strtoupper($s['nama_lengkap']),
+            'alasan'  => $alasan,
+            'admin'   => $petugas,
+            'tanggal' => date('d/m/Y H:i')
+        ], $s['no_hp']);
+        
         header("Location: index.php?status=success_cabut"); exit();
     } else {
         tampilkan_error("Gagal Mengarsipkan", "Terjadi kesalahan SQL: " . mysqli_error($conn));
@@ -196,7 +193,7 @@ if ($aksi == 'restore') {
     if ($cek) tampilkan_error("Duplikat ID", "Siswa tersebut sudah ada di tabel aktif (mungkin di-double input). Harap hubungi superuser.");
 
     $tgl_lhr    = !empty($s['tanggal_lahir'])  ? "'{$s['tanggal_lahir']}'"  : "NULL";
-    $tgl_daftar = !empty($s['tgl_daftar'])     ? "'{$s['tgl_daftar']}'"     : "NULL";
+    $tgl_daftar = !empty($s['tgl_daftar'])     ? "'{$s['tgl_daftar']}"     : "NULL";
 
     function se2($conn, $v) { return mysqli_real_escape_string($conn, $v ?? ''); }
 
@@ -228,22 +225,4 @@ if ($aksi == 'restore') {
 
 // Jika tidak ada aksi, kembalikan ke index
 header("Location: index.php"); exit();
-
-// ============================================================
-// FUNGSI CURL N8N WEBHOOK
-// ============================================================
-function kirim_n8n($url, $data) {
-    if(empty($url)) return; // Bypass kalau N8N belum dikonfigurasi
-    
-    $apikey = defined('N8N_API_KEY') ? N8N_API_KEY : '';
-    $ch = curl_init($url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-    // FIX SYNTAX ERROR KURUNG SIKU PADA ARRAY HEADER
-    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json', 'apikey: ' . $apikey]);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 5);
-    curl_exec($ch);
-    curl_close($ch);
-}
 ?>

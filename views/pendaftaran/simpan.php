@@ -37,18 +37,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 
     $sql = "INSERT INTO siswa (
-                nama_lengkap, no_hp, jurusan, asal_sekolah,
-                alamat, rt, rw, kelurahan, kecamatan,
-                petugas_pendaftar, tgl_daftar, status_siswa, status_bayar
-            ) VALUES (
-                '".mysqli_real_escape_string($conn,$nama)."',
-                '$hp', '$jurusan', '$sekolah_esc',
-                '".mysqli_real_escape_string($conn,$alamat)."',
-                '$rt', '$rw',
-                '".mysqli_real_escape_string($conn,$kelurahan)."',
-                '$kec_esc',
-                '$petugas', '$tanggal', 'BELUM DAFTAR ULANG', 'BELUM'
-            )";
+            nama_lengkap, no_hp, jurusan, asal_sekolah,
+            alamat, rt, rw, kelurahan, kecamatan,
+            petugas_pendaftar, tgl_daftar, status_siswa, status_bayar
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'BELUM DAFTAR ULANG', 'BELUM')";
+
+$stmt = mysqli_prepare($conn, $sql);
+mysqli_stmt_bind_param($stmt, "sssssssssss", 
+    $nama, $hp, $jurusan, $sekolah, 
+    $alamat, $rt, $rw, $kelurahan, $kecamatan, 
+    $petugas, $tanggal
+);
 
     if (mysqli_query($conn, $sql)) {
         header("Location: index.php?menu=input&status=success");

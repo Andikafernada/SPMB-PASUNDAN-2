@@ -1,6 +1,6 @@
 <?php
 session_start();
-// include 'config.php'; // Uncomment untuk produksi
+include 'config.php'; // WAJIB DIBUKA: Koneksi database aktif
 
 // ==========================================
 // LOGIKA BACKEND: CEK STATUS PENDAFTARAN
@@ -11,17 +11,23 @@ $error_msg = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cek_status'])) {
     $id_pendaftaran = htmlspecialchars(trim($_POST['id_pendaftaran']));
     
-    // SIMULASI DB - Ganti dengan query MySQLi Prepare Anda
-    if ($id_pendaftaran === 'SPMB-001') {
-        $status_siswa = [
-            'id_siswa' => 1, 
-            'id_pendaftaran' => 'SPMB-001', 
-            'nama_lengkap' => 'Siswa Testing', 
-            'status_bayar' => 'LUNAS', 
-            'tpa_selesai' => 0
-        ];
+    // MENGGUNAKAN PREPARED STATEMENT UNTUK KEAMANAN DARI SQL INJECTION
+    $query = "SELECT id_siswa, id_pendaftaran, nama_lengkap, status_bayar, tpa_selesai FROM siswa WHERE id_pendaftaran = ?";
+    $stmt = mysqli_prepare($conn, $query);
+    
+    if ($stmt) {
+        mysqli_stmt_bind_param($stmt, "s", $id_pendaftaran);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+        
+        if ($row = mysqli_fetch_assoc($result)) {
+            $status_siswa = $row;
+        } else {
+            $error_msg = "Waduh, ID Pendaftaran tidak ditemukan. Cek lagi ketikannya ya!";
+        }
+        mysqli_stmt_close($stmt);
     } else {
-        $error_msg = "Waduh, ID Pendaftaran tidak ditemukan. Cek lagi ketikannya ya!";
+        $error_msg = "Terjadi kesalahan pada sistem database kami.";
     }
 }
 ?>
@@ -36,7 +42,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cek_status'])) {
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- KONFIGURASI ANIMASI CUSTOM TAILWIND -->
     <script>
         tailwind.config = {
             theme: {
@@ -78,11 +83,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cek_status'])) {
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased overflow-x-hidden selection:bg-blue-500 selection:text-white">
 
-    <!-- ================= NAVBAR (Akses Panitia & Marketing) ================= -->
     <nav id="navbar" class="fixed w-full z-50 glass-nav transition-all duration-300">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-20">
-                <!-- Logo -->
                 <a href="#" class="flex items-center gap-3 group">
                     <div class="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30 group-hover:rotate-6 transition-transform">
                         <span class="text-white font-black text-xs">P2</span>
@@ -93,14 +96,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cek_status'])) {
                     </div>
                 </a>
                 
-                <!-- Nav Menu -->
                 <div class="hidden md:flex items-center space-x-8">
                     <a href="#jurusan" class="text-sm font-bold text-slate-600 hover:text-blue-600 transition">Jurusan</a>
                     <a href="#kuis" class="text-sm font-bold text-slate-600 hover:text-blue-600 transition">Kuis Minat</a>
                     <a href="#cek-status" class="text-sm font-bold text-slate-600 hover:text-blue-600 transition">Cek Status</a>
                 </div>
 
-                <!-- Akses Cepat & Panitia -->
                 <div class="flex items-center gap-3">
                     <a href="login.php" class="hidden sm:flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-sm font-bold rounded-xl shadow-lg transition transform hover:-translate-y-0.5">
                         <i class="fas fa-shield-halved text-blue-400"></i> Panitia
@@ -110,9 +111,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cek_status'])) {
         </div>
     </nav>
 
-    <!-- ================= HERO SECTION (Dynamic Visuals) ================= -->
     <section class="relative pt-32 pb-20 md:pt-40 md:pb-32 min-h-[90vh] flex items-center justify-center overflow-hidden">
-        <!-- Animated Background Blobs -->
         <div class="absolute top-0 -left-4 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-2xl opacity-30 animate-blob"></div>
         <div class="absolute top-0 -right-4 w-72 h-72 bg-blue-300 rounded-full mix-blend-multiply filter blur-2xl opacity-30 animate-blob animation-delay-2000"></div>
         <div class="absolute -bottom-8 left-20 w-72 h-72 bg-indigo-300 rounded-full mix-blend-multiply filter blur-2xl opacity-30 animate-blob animation-delay-4000"></div>
@@ -139,15 +138,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cek_status'])) {
                 Ekosistem pendidikan vokasi modern. 5 Jurusan produktif yang dirancang khusus untuk mencetak generasi inovator dan tenaga ahli siap kerja.
             </p>
 
-            <!-- Action Buttons (Marketing & Operasional Kelas) -->
             <div class="flex flex-col sm:flex-row items-center justify-center gap-4 w-full max-w-md sm:max-w-none animate-fade-in-up" style="animation-delay: 0.3s;">
-                
-                <!-- CTA DAFTAR REGULER (Marketing Utama) -->
                 <a href="public/daftar.php" class="w-full sm:w-auto flex items-center justify-center py-4 px-8 border border-transparent text-base font-bold rounded-2xl text-white bg-blue-600 hover:bg-blue-700 shadow-xl shadow-blue-500/30 transition transform hover:-translate-y-1">
                     <i class="fas fa-rocket mr-2"></i> Daftar Sekarang
                 </a>
 
-                <!-- CTA TPA SEMENTARA (Operasional Kelas - Sangat Mencolok) -->
                 <a href="views/tpa/login.php" class="group relative w-full sm:w-auto flex items-center justify-center py-4 px-8 border border-amber-200 text-base font-black rounded-2xl text-amber-900 bg-gradient-to-r from-amber-300 to-amber-500 hover:from-amber-400 hover:to-amber-600 shadow-lg transition transform hover:-translate-y-1">
                     <div class="absolute -top-3 -right-3 bg-red-500 text-white text-[10px] font-black uppercase px-2 py-1 rounded-lg animate-pulse-fast shadow-md">
                         Live Exam
@@ -159,7 +154,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cek_status'])) {
         </div>
     </section>
 
-    <!-- ================= 5 JURUSAN (Interactive Cards) ================= -->
     <section id="jurusan" class="py-24 bg-white relative">
         <div class="max-w-7xl mx-auto px-4 sm:px-6">
             <div class="text-center mb-16 reveal">
@@ -168,7 +162,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cek_status'])) {
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Data Jurusan -->
                 <?php
                 $jurusans = [
                     ['id' => 'TKJ', 'nama' => 'Teknik Komputer & Jaringan', 'icon' => 'fa-network-wired', 'color' => 'blue', 'desc' => 'Infrastruktur jaringan, routing, server Linux, & keamanan siber.'],
@@ -196,9 +189,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cek_status'])) {
         </div>
     </section>
 
-    <!-- ================= CEK STATUS & UNLOCK TPA (The Magic Reveal) ================= -->
     <section id="cek-status" class="py-24 bg-slate-900 relative overflow-hidden">
-        <!-- Abstract BG Elements -->
         <div class="absolute top-0 right-0 w-[800px] h-[800px] bg-blue-600/10 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/3"></div>
         
         <div class="max-w-4xl mx-auto px-4 sm:px-6 relative z-10">
@@ -208,12 +199,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cek_status'])) {
                 <p class="text-slate-400">Masukkan ID Pendaftaran Anda untuk membuka akses ujian dan mengecek kelengkapan berkas.</p>
             </div>
 
-            <!-- Form Cek -->
             <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-8 md:p-12 shadow-2xl reveal">
                 <form method="POST" action="#cek-status" class="max-w-lg mx-auto mb-8 relative group">
                     <div class="relative flex items-center">
                         <i class="fas fa-id-card absolute left-5 text-slate-400 group-focus-within:text-blue-500 transition-colors"></i>
-                        <input type="text" name="id_pendaftaran" placeholder="Contoh: SPMB-001" required 
+                        <input type="text" name="id_pendaftaran" placeholder="Contoh: SPMB26-001" required 
                                class="w-full pl-14 pr-32 py-5 bg-white border-2 border-transparent rounded-2xl focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all uppercase font-bold text-slate-700 shadow-inner">
                         <button type="submit" name="cek_status" class="absolute right-2 top-2 bottom-2 px-8 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition transform hover:scale-105 active:scale-95">
                             CEK
@@ -244,13 +234,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cek_status'])) {
                             </div>
                         </div>
 
-                        <!-- UNLOCK TPA LOGIC -->
-                        <?php if ($status_siswa['status_bayar'] === 'LUNAS'): ?>
+                        <?php if (strtoupper($status_siswa['status_bayar']) === 'LUNAS'): ?>
                             <?php if ($status_siswa['tpa_selesai'] == 0): ?>
                                 <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 p-6 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-6 relative overflow-hidden">
                                     <div class="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl"></div>
                                     <div class="relative z-10 text-center sm:text-left">
-                                        <h4 class="font-black text-blue-900 text-lg mb-1">Akses Ujian Terbuka! 🚀</h4>
+                                        <h4 class="font-black text-blue-900 text-lg mb-1">Akses Ujian Terbuka! 🎯</h4>
                                         <p class="text-sm text-blue-700">Silakan kerjakan Tes Potensi Akademik sekarang.</p>
                                     </div>
                                     <form action="views/tpa/login.php" method="POST" class="w-full sm:w-auto relative z-10">
@@ -287,28 +276,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cek_status'])) {
         </div>
     </section>
 
-    <!-- ================= WIDGET BANG JANGKRIK (WA) ================= -->
-    <a href="https://wa.me/6281234567890?text=Halo%20Bang%20Jangkrik,%20mau%20konsultasi%20PPDB!" target="_blank" 
+    <?php $wa_admin = $_ENV['WA_ADMIN'] ?? '6280000000000'; // Fallback aman ?>
+    <a href="https://wa.me/<?= $wa_admin ?>?text=Halo%20Bang%20Jangkrik,%20mau%20konsultasi%20PPDB!" target="_blank" 
        class="fixed bottom-6 right-6 z-50 group flex flex-col items-end gap-2 animate-float">
-        <!-- Tooltip Wangsit -->
         <div class="opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 bg-white border border-slate-200 text-slate-800 text-xs font-bold px-4 py-3 rounded-2xl rounded-br-none shadow-xl">
-            <span class="text-amber-600">Minta wangsit jurusan?</span><br>Tanya Bang Jangkrik sini! 🦗🔧
+            <span class="text-amber-600">Minta wangsit jurusan?</span><br>Tanya Bang Jangkrik sini! 🦗🔮
         </div>
-        <!-- Button Maskot -->
         <div class="w-16 h-16 bg-gradient-to-tr from-green-500 to-emerald-400 hover:from-green-400 hover:to-emerald-300 rounded-full flex items-center justify-center shadow-2xl border-4 border-white transition-transform duration-300 transform group-hover:scale-110 group-hover:rotate-12 cursor-pointer relative">
             <span class="text-3xl filter drop-shadow-md">🦗</span>
             <div class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 border-2 border-white rounded-full animate-pulse"></div>
         </div>
     </a>
 
-    <!-- Footer -->
     <footer class="bg-slate-950 py-8 text-center border-t border-slate-800">
         <p class="text-slate-500 text-sm font-medium">&copy; <?= date('Y') ?> SMK Pasundan 2 Bandung. Hak Cipta Dilindungi.</p>
     </footer>
 
-    <!-- SCRIPT SCROLL REVEAL & NAVBAR BEHAVIOR -->
     <script>
-        // Navbar scroll effect
         window.addEventListener('scroll', () => {
             const nav = document.getElementById('navbar');
             if (window.scrollY > 20) {
@@ -320,13 +304,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cek_status'])) {
             }
         });
 
-        // Scroll Reveal Animation (Intersection Observer)
         const revealElements = document.querySelectorAll('.reveal');
-        
-        const revealOptions = {
-            threshold: 0.1,
-            rootMargin: "0px 0px -50px 0px"
-        };
+        const revealOptions = { threshold: 0.1, rootMargin: "0px 0px -50px 0px" };
 
         const revealOnScroll = new IntersectionObserver(function(entries, observer) {
             entries.forEach(entry => {

@@ -1,0 +1,342 @@
+<?php
+session_start();
+// ==========================================
+// LOGIKA BACKEND: CEK STATUS PENDAFTARAN
+// ==========================================
+$status_siswa = null;
+$error_msg = '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cek_status'])) {
+    $id_pendaftaran = htmlspecialchars(trim($_POST['id_pendaftaran']));
+    if ($id_pendaftaran === 'SPMB-001') {
+        $status_siswa = [
+            'id_siswa' => 1, 'id_pendaftaran' => 'SPMB-001', 'nama_lengkap' => 'Siswa Testing', 'status_bayar' => 'LUNAS', 'tpa_selesai' => 0
+        ];
+    } else {
+        $error_msg = "Akses Ditolak: ID Tidak Terdaftar di Database Vokasi.";
+    }
+}
+?>
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPMB 2026 | PPDB SMK Pasundan 2 Bandung</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=Space+Grotesk:wght@500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'], display: ['Space Grotesk', 'sans-serif'] },
+                    animation: {
+                        'pulse-fast': 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'scan-line': 'scan 2s linear infinite',
+                        'shake': 'shake 0.5s cubic-bezier(.36,.07,.19,.97) both',
+                    },
+                    keyframes: {
+                        scan: { '0%': { top: '0%' }, '100%': { top: '100%' } },
+                        shake: { '10%, 90%': { transform: 'translate3d(-1px, 0, 0)' }, '20%, 80%': { transform: 'translate3d(2px, 0, 0)' }, '30%, 50%, 70%': { transform: 'translate3d(-4px, 0, 0)' }, '40%, 60%': { transform: 'translate3d(4px, 0, 0)' } }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        .glass-panel { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(12px); border: 1px solid rgba(0, 0, 0, 0.05); box-shadow: 0 20px 40px rgba(0,0,0,0.08); }
+        .progress-stripes { background-image: linear-gradient(45deg, rgba(255,255,255,.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,.15) 50%, rgba(255,255,255,.15) 75%, transparent 75%, transparent); background-size: 1rem 1rem; animation: stripemove 2s linear infinite; }
+        @keyframes stripemove { from { background-position: 1rem 0; } to { background-position: 0 0; } }
+        
+        /* Gacha Styles */
+        .slot-machine { height: 60px; overflow: hidden; position: relative; }
+        .slot-content { transition: transform 0.1s; }
+        
+        /* Fingerprint Scanner */
+        .fingerprint-btn { position: relative; overflow: hidden; transition: all 0.3s ease; user-select: none; -webkit-user-select: none; }
+        .scanner-beam { position: absolute; left: 0; width: 100%; height: 5px; background: #3b82f6; box-shadow: 0 0 15px #3b82f6; opacity: 0; transition: opacity 0.3s; }
+        .fingerprint-btn.scanning .scanner-beam { opacity: 1; animation: scan-line 1.5s ease-in-out infinite alternate; }
+    </style>
+</head>
+<body class="bg-gray-50 text-slate-800 antialiased selection:bg-blue-600 selection:text-white">
+
+    <!-- NAVBAR (Tetap Bersih) -->
+    <nav id="navbar" class="fixed w-full z-50 glass-panel transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <a href="#" class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                        <span class="text-white font-display font-black text-xs">P2</span>
+                    </div>
+                    <div>
+                        <div class="font-display font-black text-lg text-slate-900 leading-none">SMK Pasundan 2</div>
+                        <div class="text-[10px] text-blue-600 font-bold uppercase tracking-wider">Pusat Vokasi Jabar</div>
+                    </div>
+                </a>
+                <a href="login.php" class="px-5 py-2 bg-slate-900 text-white text-sm font-bold rounded-full shadow-md hover:bg-blue-600 transition">
+                    Portal Panitia
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- HERO SECTION -->
+    <section class="pt-32 pb-16 md:pt-40 md:pb-24 px-4">
+        <div class="max-w-5xl mx-auto text-center">
+            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-100 text-blue-700 text-xs font-bold mb-6">
+                <span class="w-2 h-2 rounded-full bg-blue-600 animate-pulse-fast"></span> PPDB 2026 Dibuka
+            </div>
+            <h1 class="text-5xl md:text-7xl font-display font-black text-slate-900 leading-[1.1] mb-6 tracking-tight">
+                Jangan Salah Jurusan.<br>
+                <span class="text-blue-600">Pilih Jalur Suksesmu.</span>
+            </h1>
+            <p class="text-slate-500 text-base md:text-lg max-w-2xl mx-auto mb-10 font-medium">
+                Sistem pendaftaran vokasi paling mutakhir. Kuota kelas industri terbatas. Cek minatmu, klaim kursimu sekarang sebelum kehabisan.
+            </p>
+        </div>
+    </section>
+
+    <!-- MARKETING HOOK 1: GACHA WANGSIT BANG JANGKRIK -->
+    <section class="pb-16 px-4">
+        <div class="max-w-3xl mx-auto glass-panel rounded-3xl p-8 border-2 border-blue-500/20 relative overflow-hidden">
+            <div class="absolute -right-10 -top-10 text-9xl opacity-5 transform rotate-12">🦗</div>
+            
+            <div class="text-center relative z-10">
+                <h3 class="text-2xl font-display font-black text-slate-800 mb-2">Bingung Pilih Jurusan?</h3>
+                <p class="text-slate-500 text-sm mb-6">Tekan tombol di bawah untuk mendapatkan wangsit kecocokan jurusan dari algoritma Bang Jangkrik.</p>
+                
+                <!-- Mesin Gacha -->
+                <div class="bg-slate-900 rounded-2xl p-4 w-full max-w-md mx-auto mb-6 shadow-inner border border-slate-800">
+                    <div class="slot-machine flex items-center justify-center h-16 bg-slate-800 rounded-xl border-2 border-slate-700 relative overflow-hidden">
+                        <div id="wangsit-result" class="font-display font-black text-2xl text-blue-400 tracking-widest uppercase">
+                            [ TEKAN TOMBOL ]
+                        </div>
+                    </div>
+                    <p id="wangsit-desc" class="text-slate-400 text-xs mt-3 h-8">...</p>
+                </div>
+                
+                <button id="btn-gacha" onclick="putarWangsit()" class="px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold rounded-xl shadow-lg shadow-blue-500/30 transition transform active:scale-95 flex items-center justify-center mx-auto gap-2">
+                    <i class="fas fa-bolt text-yellow-300"></i> Minta Wangsit Jurusan
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- MARKETING HOOK 2: JURUSAN DENGAN LIVE QUOTA FOMO -->
+    <section id="jurusan" class="py-16 bg-white px-4">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex flex-col md:flex-row justify-between items-end mb-10 gap-4">
+                <div>
+                    <h2 class="text-3xl font-display font-black text-slate-900 mb-2">Status Kapasitas Kelas</h2>
+                    <p class="text-slate-500 text-sm">Pendaftaran otomatis ditutup jika kuota terpenuhi.</p>
+                </div>
+                <a href="public/daftar.php" class="px-6 py-3 bg-slate-900 text-white font-bold rounded-xl hover:bg-blue-600 transition shadow-lg flex items-center gap-2">
+                    Amankan Kursi <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <?php
+                // Simulasi Data Marketing FOMO (Sisa kuota dibuat menipis)
+                $jurusans = [
+                    ['id' => 'TKJ', 'nama' => 'Teknik Komputer Jaringan', 'icon' => 'fa-server', 'color' => 'blue', 'kuota' => 108, 'terisi' => 92],
+                    ['id' => 'TPM', 'nama' => 'Teknik Pemesinan', 'icon' => 'fa-cogs', 'color' => 'emerald', 'kuota' => 72, 'terisi' => 65],
+                    ['id' => 'TKR', 'nama' => 'Teknik Kendaraan Ringan', 'icon' => 'fa-car', 'color' => 'orange', 'kuota' => 108, 'terisi' => 88],
+                    ['id' => 'TSM', 'nama' => 'Teknik Sepeda Motor', 'icon' => 'fa-motorcycle', 'color' => 'red', 'kuota' => 108, 'terisi' => 101],
+                    ['id' => 'TAV', 'nama' => 'Teknik Audio Video', 'icon' => 'fa-video', 'color' => 'purple', 'kuota' => 36, 'terisi' => 28]
+                ];
+                foreach ($jurusans as $j):
+                    $persen = round(($j['terisi'] / $j['kuota']) * 100);
+                    $sisa = $j['kuota'] - $j['terisi'];
+                    $alertColor = $sisa <= 10 ? 'red' : ($sisa <= 20 ? 'orange' : 'emerald');
+                ?>
+                <div class="bg-slate-50 rounded-2xl p-6 border border-slate-200 hover:border-<?= $j['color'] ?>-400 transition group">
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="w-12 h-12 bg-<?= $j['color'] ?>-100 text-<?= $j['color'] ?>-600 rounded-xl flex items-center justify-center text-xl font-black">
+                            <i class="fas <?= $j['icon'] ?>"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-display font-bold text-slate-800 leading-tight"><?= $j['nama'] ?></h3>
+                            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider"><?= $j['id'] ?></span>
+                        </div>
+                    </div>
+                    
+                    <!-- Progress Bar FOMO -->
+                    <div class="mt-4">
+                        <div class="flex justify-between text-xs font-bold mb-1">
+                            <span class="text-slate-500">Kapasitas Terisi</span>
+                            <span class="text-<?= $alertColor ?>-600"><?= $persen ?>% (Sisa <?= $sisa ?>)</span>
+                        </div>
+                        <div class="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
+                            <div class="bg-<?= $alertColor ?>-500 h-2.5 rounded-full progress-stripes transition-all duration-1000" style="width: <?= $persen ?>%"></div>
+                        </div>
+                        <?php if($sisa <= 10): ?>
+                            <p class="text-[10px] text-red-500 font-bold mt-2 animate-pulse"><i class="fas fa-fire mr-1"></i> Kuota hampir habis!</p>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+    </section>
+
+    <!-- MARKETING HOOK 3: FINGERPRINT STATUS SCANNER -->
+    <section id="cek-status" class="py-24 bg-slate-900 px-4 relative overflow-hidden">
+        <div class="max-w-xl mx-auto relative z-10 text-center">
+            <h2 class="text-3xl font-display font-black text-white mb-2">Autentikasi Siswa</h2>
+            <p class="text-slate-400 text-sm mb-10">Masukkan ID Pendaftaran, lalu tahan sidik jari untuk verifikasi data dan membuka Portal Ujian TPA.</p>
+
+            <div class="bg-slate-800 p-8 rounded-3xl border border-slate-700 shadow-2xl relative">
+                <form id="form-scan" method="POST" action="#cek-status">
+                    <input type="text" name="id_pendaftaran" id="id_input" placeholder="SPMB-XXX" required
+                           class="w-full text-center text-2xl py-4 bg-slate-900 border-2 border-slate-700 rounded-xl focus:outline-none focus:border-blue-500 text-white font-display font-black uppercase tracking-widest mb-8 shadow-inner">
+                    
+                    <!-- Tactile Fingerprint Button -->
+                    <div class="flex flex-col items-center">
+                        <input type="hidden" name="cek_status" value="1">
+                        <button type="button" id="btn-fingerprint" 
+                                class="fingerprint-btn w-24 h-28 bg-slate-700 hover:bg-slate-600 rounded-3xl border-4 border-slate-600 flex items-center justify-center text-blue-400 text-5xl shadow-[0_0_30px_rgba(59,130,246,0.1)] focus:outline-none">
+                            <div class="scanner-beam"></div>
+                            <i class="fas fa-fingerprint"></i>
+                        </button>
+                        <p id="scan-instruction" class="text-xs text-slate-500 font-bold mt-4 uppercase tracking-widest">Tahan / Hold untuk Verifikasi</p>
+                    </div>
+                </form>
+
+                <!-- PHP RESULT (Tetap sama) -->
+                <?php if ($error_msg): ?>
+                    <div class="mt-6 p-4 bg-red-500/20 text-red-400 rounded-xl text-sm font-bold animate-shake">
+                        <?= $error_msg ?>
+                    </div>
+                <?php endif; ?>
+
+                <?php if ($status_siswa): ?>
+                    <div class="mt-8 bg-blue-900/40 border border-blue-500/50 p-6 rounded-2xl text-left">
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="w-12 h-12 bg-blue-500 text-white rounded-full flex items-center justify-center text-xl font-bold"><i class="fas fa-check"></i></div>
+                            <div>
+                                <div class="text-xs text-blue-400 font-bold uppercase">Akses Diberikan</div>
+                                <div class="text-xl font-display font-black text-white"><?= htmlspecialchars($status_siswa['nama_lengkap']) ?></div>
+                            </div>
+                        </div>
+                        <?php if ($status_siswa['status_bayar'] === 'LUNAS' && $status_siswa['tpa_selesai'] == 0): ?>
+                            <form action="views/tpa/login.php" method="POST">
+                                <input type="hidden" name="id_pendaftaran" value="<?= htmlspecialchars($status_siswa['id_pendaftaran']) ?>">
+                                <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl shadow-lg transition active:scale-95">
+                                    Masuk Portal TPA <i class="fas fa-door-open ml-2"></i>
+                                </button>
+                            </form>
+                        <?php endif; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </div>
+    </section>
+
+    <!-- JS LOGIC UNTUK MARKETING HOOKS -->
+    <script>
+        // --- LOGIKA 1: GACHA WANGSIT BANG JANGKRIK ---
+        const jurusanData = [
+            { id: "TKJ", desc: "Aura kabel UTP mengelilingimu. Cocok jadi penguasa jaringan & server!" },
+            { id: "TPM", desc: "Tanganmu terbuat dari besi. Presisi CNC ada di dalam DNA-mu!" },
+            { id: "TKR", desc: "Bau oli adalah parfummu. Mesin injeksi menunggumu!" },
+            { id: "TSM", desc: "Jiwa *riding*-mu kuat. Tarikan gas roda dua adalah takdirmu!" },
+            { id: "TAV", desc: "Mata kameramu tajam. Sutradara & ahli sinyal masa depan!" }
+        ];
+
+        let isSpinning = false;
+        function putarWangsit() {
+            if (isSpinning) return;
+            isSpinning = true;
+            
+            const resultEl = document.getElementById('wangsit-result');
+            const descEl = document.getElementById('wangsit-desc');
+            const btn = document.getElementById('btn-gacha');
+            
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Algoritma Bekerja...';
+            btn.classList.add('opacity-75');
+            descEl.innerText = "Membaca garis tangan digital...";
+
+            let counter = 0;
+            const spinInterval = setInterval(() => {
+                // Tampilkan random jurusan cepat
+                const randomJ = jurusanData[Math.floor(Math.random() * jurusanData.length)];
+                resultEl.innerText = randomJ.id;
+                counter++;
+
+                if (counter > 20) {
+                    clearInterval(spinInterval);
+                    // Hasil Akhir
+                    const finalJ = jurusanData[Math.floor(Math.random() * jurusanData.length)];
+                    resultEl.innerText = finalJ.id;
+                    resultEl.className = "font-display font-black text-3xl text-yellow-400 tracking-widest uppercase transform scale-110 transition-transform duration-300";
+                    descEl.innerHTML = `<span class="text-white font-bold">Wangsit Bang Jangkrik:</span> ${finalJ.desc}`;
+                    
+                    btn.innerHTML = '<i class="fas fa-redo"></i> Acak Ulang';
+                    btn.classList.remove('opacity-75');
+                    isSpinning = false;
+                }
+            }, 100);
+        }
+
+        // --- LOGIKA 2: FINGERPRINT SCANNER ---
+        const btnFinger = document.getElementById('btn-fingerprint');
+        const formScan = document.getElementById('form-scan');
+        const idInput = document.getElementById('id_input');
+        const instruction = document.getElementById('scan-instruction');
+        
+        let scanTimer;
+        const requiredScanTime = 1500; // 1.5 detik ditahan
+
+        function startScan(e) {
+            e.preventDefault(); // Mencegah klik biasa
+            if(idInput.value.trim() === '') {
+                idInput.classList.add('border-red-500', 'animate-shake');
+                setTimeout(() => idInput.classList.remove('border-red-500', 'animate-shake'), 500);
+                instruction.innerText = "ISI ID DULU, BOS!";
+                instruction.classList.add('text-red-400');
+                return;
+            }
+
+            instruction.innerText = "MEMINDAI... TAHAN TERUS";
+            instruction.classList.remove('text-red-400');
+            instruction.classList.add('text-blue-400', 'animate-pulse');
+            btnFinger.classList.add('scanning', 'bg-slate-800', 'border-blue-500', 'text-blue-500');
+            btnFinger.style.transform = 'scale(0.95)';
+
+            // Jika ditahan sampai waktu habis, submit form
+            scanTimer = setTimeout(() => {
+                instruction.innerText = "AKSES DITERIMA!";
+                instruction.classList.replace('text-blue-400', 'text-emerald-400');
+                btnFinger.classList.replace('text-blue-500', 'text-emerald-500');
+                btnFinger.classList.replace('border-blue-500', 'border-emerald-500');
+                // Vibrate jika di HP
+                if(navigator.vibrate) navigator.vibrate([200, 100, 200]);
+                
+                setTimeout(() => formScan.submit(), 500);
+            }, requiredScanTime);
+        }
+
+        function stopScan() {
+            clearTimeout(scanTimer);
+            if(instruction.innerText !== "AKSES DITERIMA!") {
+                instruction.innerText = "Tahan / Hold untuk Verifikasi";
+                instruction.classList.remove('text-blue-400', 'animate-pulse');
+                btnFinger.classList.remove('scanning', 'bg-slate-800', 'border-blue-500', 'text-blue-500');
+                btnFinger.style.transform = 'scale(1)';
+            }
+        }
+
+        // Support untuk layar sentuh HP dan klik Mouse PC
+        btnFinger.addEventListener('mousedown', startScan);
+        btnFinger.addEventListener('touchstart', startScan, {passive: false});
+        
+        btnFinger.addEventListener('mouseup', stopScan);
+        btnFinger.addEventListener('mouseleave', stopScan);
+        btnFinger.addEventListener('touchend', stopScan);
+        btnFinger.addEventListener('touchcancel', stopScan);
+    </script>
+</body>
+</html>

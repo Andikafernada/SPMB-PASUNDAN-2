@@ -7,13 +7,18 @@
 date_default_timezone_set('Asia/Jakarta'); // WIB
 include 'config.php';
 
-/* ── LOOKUP SISWA ─────────────────────────────────────── */
-$id_reg = trim(mysqli_real_escape_string($conn, $_GET['id_reg'] ?? ''));
+/* ── LOOKUP SISWA (PENGAMANAN MENGGUNAKAN PREPARED STATEMENT) ── */
+$id_reg = trim($_GET['id_reg'] ?? '');
 if (!$id_reg) { header("Location: /"); exit; }
 
-$d = mysqli_fetch_assoc(mysqli_query($conn,
-    "SELECT * FROM siswa WHERE id_pendaftaran = '$id_reg' LIMIT 1"
-));
+$query_lookup = "SELECT * FROM siswa WHERE id_pendaftaran = ? LIMIT 1";
+$stmt_lookup = mysqli_prepare($conn, $query_lookup);
+mysqli_stmt_bind_param($stmt_lookup, "s", $id_reg);
+mysqli_stmt_execute($stmt_lookup);
+$result_lookup = mysqli_stmt_get_result($stmt_lookup);
+$d = mysqli_fetch_assoc($result_lookup);
+mysqli_stmt_close($stmt_lookup);
+
 if (!$d) {
     http_response_code(404);
 ?><!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -37,7 +42,7 @@ $terisi  = array_filter($wajib, fn($f) => !empty($d[$f]));
 $persen  = round(count($terisi) / count($wajib) * 100);
 $is_locked = ($persen >= 100); // sudah penuh → read-only
 
-/* ── PROSES SIMPAN ────────────────────────────────────── */
+/* ── PROSES SIMPAN (FULL SECURE DENGAN PREPARED STATEMENT) ── */
 $pesan = '';
 $pesan_type = '';
 
@@ -46,64 +51,70 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$is_locked) {
         $pesan = 'Sesi kamu sudah habis nih. Coba refresh halamannya ya.';
         $pesan_type = 'error';
     } else {
-        $esc  = fn($v) => mysqli_real_escape_string($conn, strtoupper(trim($v ?? '')));
-        $escR = fn($v) => mysqli_real_escape_string($conn, trim($v ?? ''));
-        $date = fn($v) => !empty($v) ? "'" . mysqli_real_escape_string($conn, $v) . "'" : "NULL";
-
-        $nama           = $esc($_POST['nama_lengkap']);
-        $jk             = $escR($_POST['jenis_kelamin']);
-        $tempat_lhr     = $esc($_POST['tempat_lahir']);
-        $tgl_lhr        = $date($_POST['tanggal_lahir']);
-        $agama          = $escR($_POST['agama']);
-        $no_hp          = $escR($_POST['no_hp']);
-        $nisn           = $escR($_POST['nisn']);
-        $nik            = $escR($_POST['nik']);
-        $sekolah_asal   = $esc($_POST['sekolah_asal']);
-        $nama_jalan     = $esc($_POST['nama_jalan']);
-        $rt             = $escR($_POST['rt']);
-        $rw             = $escR($_POST['rw']);
-        $kelurahan      = $esc($_POST['kelurahan']);
-        $kecamatan      = $esc($_POST['kecamatan']);
-        $kota           = $esc($_POST['kota']);
-        $provinsi       = $esc($_POST['provinsi']);
-        $nama_ayah      = $esc($_POST['nama_ayah']);
-        $nik_ayah       = $escR($_POST['nik_ayah']);
-        $ttl_ayah       = $esc($_POST['tempat_lahir_ayah']);
-        $tgl_ayah       = $date($_POST['tgl_lahir_ayah']);
-        $pekerjaan_ayah = $escR($_POST['pekerjaan_ayah']);
-        $nama_ibu       = $esc($_POST['nama_ibu']);
-        $nik_ibu        = $escR($_POST['nik_ibu']);
-        $ttl_ibu        = $esc($_POST['tempat_lahir_ibu']);
-        $tgl_ibu        = $date($_POST['tgl_lahir_ibu']);
-        $pekerjaan_ibu  = $escR($_POST['pekerjaan_ibu']);
-        $req_kelas      = $esc($_POST['request_kelas']);
+        $nama           = strtoupper(trim($_POST['nama_lengkap'] ?? ''));
+        $jk             = trim($_POST['jenis_kelamin'] ?? '');
+        $tempat_lhr     = strtoupper(trim($_POST['tempat_lahir'] ?? ''));
+        $tgl_lhr        = !empty($_POST['tanggal_lahir']) ? $_POST['tanggal_lahir'] : null;
+        $agama          = trim($_POST['agama'] ?? '');
+        $no_hp          = trim($_POST['no_hp'] ?? '');
+        $nisn           = trim($_POST['nisn'] ?? '');
+        $nik            = trim($_POST['nik'] ?? '');
+        $sekolah_asal   = strtoupper(trim($_POST['sekolah_asal'] ?? ''));
+        $nama_jalan     = strtoupper(trim($_POST['nama_jalan'] ?? ''));
+        $rt             = trim($_POST['rt'] ?? '');
+        $rw             = trim($_POST['rw'] ?? '');
+        $kelurahan      = strtoupper(trim($_POST['kelurahan'] ?? ''));
+        $kecamatan      = strtoupper(trim($_POST['kecamatan'] ?? ''));
+        $kota           = strtoupper(trim($_POST['kota'] ?? ''));
+        $provinsi       = strtoupper(trim($_POST['provinsi'] ?? ''));
+        
+        $nama_ayah      = strtoupper(trim($_POST['nama_ayah'] ?? ''));
+        $nik_ayah       = trim($_POST['nik_ayah'] ?? '');
+        $ttl_ayah       = strtoupper(trim($_POST['tempat_lahir_ayah'] ?? ''));
+        $tgl_ayah       = !empty($_POST['tgl_lahir_ayah']) ? $_POST['tgl_lahir_ayah'] : null;
+        $pekerjaan_ayah = trim($_POST['pekerjaan_ayah'] ?? '');
+        
+        $nama_ibu       = strtoupper(trim($_POST['nama_ibu'] ?? ''));
+        $nik_ibu        = trim($_POST['nik_ibu'] ?? '');
+        $ttl_ibu        = strtoupper(trim($_POST['tempat_lahir_ibu'] ?? ''));
+        $tgl_ibu        = !empty($_POST['tgl_lahir_ibu']) ? $_POST['tgl_lahir_ibu'] : null;
+        $pekerjaan_ibu  = trim($_POST['pekerjaan_ibu'] ?? '');
+        $req_kelas      = strtoupper(trim($_POST['request_kelas'] ?? ''));
 
         if (!$nama || !$jk || !$agama || !$nisn || !$nik) {
             $pesan = 'Ups! Masih ada data bertanda bintang (*) yang belum kamu isi.';
             $pesan_type = 'error';
         } else {
             $sql = "UPDATE siswa SET
-                nama_lengkap       = '$nama', jenis_kelamin      = '$jk',
-                tempat_lahir       = '$tempat_lhr', tanggal_lahir      = $tgl_lhr,
-                agama              = '$agama', no_hp              = '$no_hp',
-                nisn               = '$nisn', nik                = '$nik',
-                sekolah_asal       = '$sekolah_asal', nama_jalan         = '$nama_jalan',
-                alamat             = '$nama_jalan', rt                 = '$rt',
-                rw                 = '$rw', kelurahan          = '$kelurahan',
-                kecamatan          = '$kecamatan', kota               = '$kota',
-                provinsi           = '$provinsi', nama_ayah          = '$nama_ayah',
-                nik_ayah           = '$nik_ayah', tempat_lahir_ayah  = '$ttl_ayah',
-                tgl_lahir_ayah     = $tgl_ayah, pekerjaan_ayah     = '$pekerjaan_ayah',
-                nama_ibu           = '$nama_ibu', nik_ibu            = '$nik_ibu',
-                tempat_lahir_ibu   = '$ttl_ibu', tgl_lahir_ibu      = $tgl_ibu,
-                pekerjaan_ibu      = '$pekerjaan_ibu', request_kelas      = '$req_kelas'
-                WHERE id_siswa     = '$id_siswa'";
+                    nama_lengkap=?, jenis_kelamin=?, tempat_lahir=?, tanggal_lahir=?,
+                    agama=?, no_hp=?, nisn=?, nik=?, sekolah_asal=?, nama_jalan=?,
+                    alamat=?, rt=?, rw=?, kelurahan=?, kecamatan=?, kota=?,
+                    provinsi=?, nama_ayah=?, nik_ayah=?, tempat_lahir_ayah=?,
+                    tgl_lahir_ayah=?, pekerjaan_ayah=?, nama_ibu=?, nik_ibu=?,
+                    tempat_lahir_ibu=?, tgl_lahir_ibu=?, pekerjaan_ibu=?, request_kelas=?
+                    WHERE id_siswa=?";
 
-            if (mysqli_query($conn, $sql)) {
-                header("Location: ?id_reg=$id_reg&saved=1");
-                exit;
+            $stmt_update = mysqli_prepare($conn, $sql);
+            if ($stmt_update) {
+                // Ada 28 field update + 1 id_siswa = 29 parameter
+                mysqli_stmt_bind_param($stmt_update, "ssssssssssssssssssssssssssssi",
+                    $nama, $jk, $tempat_lhr, $tgl_lhr, $agama, $no_hp, $nisn, $nik,
+                    $sekolah_asal, $nama_jalan, $nama_jalan, $rt, $rw, $kelurahan,
+                    $kecamatan, $kota, $provinsi, $nama_ayah, $nik_ayah, $ttl_ayah,
+                    $tgl_ayah, $pekerjaan_ayah, $nama_ibu, $nik_ibu, $ttl_ibu,
+                    $tgl_ibu, $pekerjaan_ibu, $req_kelas, $id_siswa
+                );
+
+                if (mysqli_stmt_execute($stmt_update)) {
+                    header("Location: ?id_reg=" . urlencode($id_reg) . "&saved=1");
+                    exit;
+                } else {
+                    $pesan = 'Aduh, sistem sedang sibuk: ' . mysqli_error($conn);
+                    $pesan_type = 'error';
+                }
+                mysqli_stmt_close($stmt_update);
             } else {
-                $pesan = 'Aduh, sistem sedang sibuk: ' . mysqli_error($conn);
+                $pesan = 'Kesalahan preparasi data: ' . mysqli_error($conn);
                 $pesan_type = 'error';
             }
         }
@@ -113,8 +124,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$is_locked) {
 $saved = isset($_GET['saved']);
 $csrf_token = generate_csrf_token();
 
-// Re-fetch fresh data
-$d = mysqli_fetch_assoc(mysqli_query($conn, "SELECT * FROM siswa WHERE id_siswa = '$id_siswa' LIMIT 1"));
+// Re-fetch fresh data setelah simpan
+$query_refresh = "SELECT * FROM siswa WHERE id_siswa = ? LIMIT 1";
+$stmt_refresh = mysqli_prepare($conn, $query_refresh);
+mysqli_stmt_bind_param($stmt_refresh, "i", $id_siswa);
+mysqli_stmt_execute($stmt_refresh);
+$d = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_refresh));
+mysqli_stmt_close($stmt_refresh);
+
 $terisi  = array_filter($wajib, fn($f) => !empty($d[$f]));
 $persen  = round(count($terisi) / count($wajib) * 100);
 $is_locked = ($persen >= 100);
@@ -671,7 +688,6 @@ function submitForm() {
 
 <?php if ($is_locked): ?>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
 async function downloadKartuPDF() {
   const btn = event.currentTarget;
@@ -683,35 +699,26 @@ async function downloadKartuPDF() {
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a5' });
 
-    // A5 Size: 148 x 210 mm
     const pw = 148, ph = 210, margin = 10, cw = pw - margin * 2;
-
-    // AMBIL DATA LANGSUNG DARI PHP (Anti-Gagal)
     const namaSiswa = <?= json_encode(strtoupper($d['nama_lengkap'] ?? '-')) ?>;
     const noReg = <?= json_encode($id_reg ?? '-') ?>;
     const jurusanSiswa = <?= json_encode(strtoupper($d['jurusan'] ?? '-')) ?>;
     const asalSekolah = <?= json_encode(strtoupper($d['sekolah_asal'] ?: ($d['asal_sekolah'] ?? '-'))) ?>;
     const tglSubmit = <?= json_encode(date('d F Y, H:i') . ' WIB') ?>;
 
-    // Background Putih Bersih
     pdf.setFillColor(255, 255, 255);
     pdf.rect(0, 0, pw, ph, 'F');
-    
-    // Header Biru Indigo
     pdf.setFillColor(79, 70, 229); 
     pdf.rect(0, 0, pw, 26, 'F');
-
     pdf.setFont('helvetica', 'bold');
     pdf.setFontSize(14);
     pdf.setTextColor(255, 255, 255);
     pdf.text('SMK PASUNDAN 2 BANDUNG', margin, 12);
-    
     pdf.setFont('helvetica', 'normal');
     pdf.setFontSize(8);
     pdf.setTextColor(199, 210, 254);
     pdf.text('TIKET BUKTI PENGISIAN DATA SPMB 2026/2027', margin, 18);
 
-    // Badge Terverifikasi
     pdf.setFillColor(16, 185, 129);
     pdf.roundedRect(pw - margin - 28, 8, 28, 7, 1, 1, 'F');
     pdf.setFont('helvetica', 'bold');
@@ -719,7 +726,6 @@ async function downloadKartuPDF() {
     pdf.setTextColor(255, 255, 255);
     pdf.text('TERVERIFIKASI', pw - margin - 25, 12.5);
 
-    // Bagian Nama
     let y = 36;
     pdf.setFont('helvetica', 'bold');
     pdf.setFontSize(8);
@@ -731,7 +737,6 @@ async function downloadKartuPDF() {
     pdf.setTextColor(15, 23, 42);
     pdf.text(namaSiswa, margin, y);
 
-    // Kotak Info Grid
     y += 10;
     pdf.setFillColor(248, 250, 252);
     pdf.setDrawColor(226, 232, 240);
@@ -747,18 +752,15 @@ async function downloadKartuPDF() {
     pdf.setFontSize(9);
     pdf.setTextColor(79, 70, 229);
     pdf.text(noReg, margin + 5, y + 13);
-    
     pdf.setTextColor(15, 23, 42);
     pdf.text(jurusanSiswa, margin + 65, y + 13);
     
-    // Potong teks nama sekolah jika terlalu panjang agar tidak merusak layout PDF
     let slines = pdf.splitTextToSize(asalSekolah, 55);
     pdf.text(slines[0] || '-', margin + 5, y + 30);
     
     pdf.setTextColor(16, 185, 129);
     pdf.text('100% LENGKAP', margin + 65, y + 30);
 
-    // Tanggal
     y += 48;
     pdf.setFont('helvetica', 'normal');
     pdf.setFontSize(8);
@@ -768,13 +770,11 @@ async function downloadKartuPDF() {
     pdf.setTextColor(15, 23, 42);
     pdf.text(tglSubmit, margin + 32, y);
 
-    // Garis Putus-putus (Sobekan Tiket)
     y += 8;
     pdf.setLineDashPattern([2, 2], 0);
     pdf.line(margin, y, pw - margin, y);
     pdf.setLineDashPattern([], 0);
 
-    // KOTAK PESAN PENYEMANGAT
     y += 6;
     pdf.setFillColor(240, 249, 255); 
     pdf.setDrawColor(186, 230, 253); 
@@ -789,17 +789,14 @@ async function downloadKartuPDF() {
     pdf.text('Terima kasih sudah memilih SMK Pasundan 2. Tetap semangat, jaga', margin + 4, y + 11.5);
     pdf.text('kesehatan, dan persiapkan dirimu untuk menjadi yang terbaik!', margin + 4, y + 15);
 
-    // INFO DAFTAR ULANG & CHECKLIST
     y += 21;
     pdf.setFillColor(254, 252, 232); 
     pdf.setDrawColor(253, 230, 138); 
     pdf.roundedRect(margin, y, cw, 42, 2, 2, 'FD');
-    
     pdf.setFont('helvetica', 'bold');
     pdf.setFontSize(9);
     pdf.setTextColor(217, 119, 6);
     pdf.text('PERHATIAN: WAJIB DAFTAR ULANG', margin + 4, y + 7);
-
     pdf.setFont('helvetica', 'normal');
     pdf.setFontSize(7.5);
     pdf.setTextColor(71, 85, 105);
@@ -817,16 +814,13 @@ async function downloadKartuPDF() {
     
     pdf.setFont('helvetica', 'normal');
     syarat.forEach(item => {
-      // Menggambar Kotak Checkbox [ ]
       pdf.setDrawColor(148, 163, 184); 
       pdf.setLineWidth(0.3);
       pdf.rect(margin + 4, y - 2.5, 3, 3);
-      
       pdf.text(item, margin + 9, y);
       y += 5;
     });
 
-    // SIMULASI BARCODE TIKET
     y += 3;
     pdf.setFillColor(15, 23, 42); 
     let startX = pw / 2 - 25;
@@ -839,7 +833,6 @@ async function downloadKartuPDF() {
         startX += space;
     }
 
-    // Footer
     y = ph - 8;
     pdf.setFontSize(6);
     pdf.setTextColor(148, 163, 184);

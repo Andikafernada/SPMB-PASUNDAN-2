@@ -14,33 +14,45 @@ if (isset($_SESSION['tpa_login']) && $_SESSION['tpa_login'] === true) {
 
 $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $id_reg = mysqli_real_escape_string($conn, $_POST['id_pendaftaran'] ?? '');
+    $id_reg = trim($_POST['id_pendaftaran'] ?? '');
 
     if (empty($id_reg)) {
         $error = 'ID Pendaftaran harus diisi!';
     } else {
-        // Cari siswa berdasarkan id_pendaftaran
-        $q = mysqli_query($conn, "SELECT * FROM siswa WHERE id_pendaftaran = '$id_reg' LIMIT 1");
-        if (mysqli_num_rows($q) > 0) {
-            $siswa = mysqli_fetch_assoc($q);
+        // PERBAIKAN: Gunakan Prepared Statement
+        $query = "SELECT * FROM siswa WHERE id_pendaftaran = ? LIMIT 1";
+        $stmt = mysqli_prepare($conn, $query);
+        
+        if ($stmt) {
+            mysqli_stmt_bind_param($stmt, "s", $id_reg);
+            mysqli_stmt_execute($stmt);
+            $result = mysqli_stmt_get_result($stmt);
+            
+            if (mysqli_num_rows($result) > 0) {
+                $siswa = mysqli_fetch_assoc($result);
 
-            // Jika sudah selesai TPA, arahkan ke hasil
-            if ($siswa['tpa_selesai'] == 1) {
-                header("Location: hasil.php?id=" . $siswa['id_siswa']);
+                // Jika sudah selesai TPA, arahkan ke hasil
+                if ($siswa['tpa_selesai'] == 1) {
+                    header("Location: hasil.php?id=" . $siswa['id_siswa']);
+                    exit();
+                }
+
+                // Set session untuk TPA
+                $_SESSION['tpa_login'] = true;
+                $_SESSION['tpa_id_siswa'] = $siswa['id_siswa'];
+                $_SESSION['tpa_nama'] = $siswa['nama_lengkap'];
+                $_SESSION['tpa_jurusan'] = $siswa['jurusan'];
+                $_SESSION['tpa_id_reg'] = $siswa['id_pendaftaran'];
+
+                // Redirect ke Hero Selection
+                header("Location: hero_select.php");
                 exit();
+            } else {
+                $error = 'ID Pendaftaran tidak ditemukan! Pastikan ID yang dimasukkan benar.';
             }
-
-            // Set session untuk TPA
-            $_SESSION['tpa_login'] = true;
-            $_SESSION['tpa_id_siswa'] = $siswa['id_siswa'];
-            $_SESSION['tpa_nama'] = $siswa['nama_lengkap'];
-            $_SESSION['tpa_jurusan'] = $siswa['jurusan'];
-            $_SESSION['tpa_id_reg'] = $id_reg;
-
-            header("Location: index.php");
-            exit();
+            mysqli_stmt_close($stmt);
         } else {
-            $error = 'ID Pendaftaran tidak ditemukan! Pastikan ID yang Anda masukkan benar.';
+            $error = 'Terjadi kesalahan sistem, silakan coba lagi.';
         }
     }
 }
