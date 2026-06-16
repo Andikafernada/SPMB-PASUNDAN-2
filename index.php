@@ -46,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cek_status'])) {
     <meta name="keywords" content="SMK Pasundan 2, PPDB SMK Bandung, Sekolah Vokasi, TKJ, TKR, TPM, TSM, TAV, SPMB 2026">
     <meta name="author" content="SMK Pasundan 2 Bandung">
     <meta name="robots" content="index, follow">
-    <link rel="canonical" href="https://spmb.smkpasundan2.sch.id">
+    <link rel="canonical" href="https://spmb-pasundan2.my.id">
 
     <!-- JSON-LD Schema for Organization -->
     <script type="application/ld+json">
@@ -55,8 +55,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cek_status'])) {
         "@type": "EducationalOrganization",
         "name": "SMK Pasundan 2 Bandung",
         "alternateName": "SPMB SMK Pasundan 2",
-        "url": "https://smkpasundan2.sch.id",
-        "logo": "https://spmb.smkpasundan2.sch.id/favicon.svg",
+        "url": "https://spmb-pasundan2.my.id",
+        "logo": "https://spmb-pasundan2.my.id/favicon.svg",
         "image": "https://i.ibb.co/3WwYV6t/logo-pasundan-placeholder.png",
         "telephone": "+62-22-7310119",
         "email": "info@smkpasundan2.sch.id",
@@ -106,7 +106,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cek_status'])) {
         "organizer": {
             "@type": "Organization",
             "name": "SMK Pasundan 2 Bandung",
-            "url": "https://smkpasundan2.sch.id"
+            "url": "https://spmb-pasundan2.my.id"
         }
     }
     </script>
@@ -115,7 +115,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cek_status'])) {
     <meta property="og:title" content="Pendaftaran Siswa Baru - SMK Pasundan 2 Bandung">
     <meta property="og:description" content="Gelombang 2 telah dibuka! Gabung sekarang di ekosistem vokasi modern dengan fasilitas standar industri.">
     <meta property="og:image" content="https://i.ibb.co/3WwYV6t/logo-pasundan-placeholder.png">
-    <meta property="og:url" content="https://spmb.smkpasundan2.sch.id">
+    <meta property="og:url" content="https://spmb-pasundan2.my.id">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="SPMB SMK Pasundan 2 Bandung">
 

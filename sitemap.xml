@@ -2,7 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <!-- Homepage -->
     <url>
-        <loc>https://spmb.smkpasundan2.sch.id/</loc>
+        <loc>https://spmb-pasundan2.my.id/</loc>
         <lastmod><?= date('Y-m-d') ?></lastmod>
         <changefreq>daily</changefreq>
         <priority>1.0</priority>
@@ -10,13 +10,13 @@
 
     <!-- Public Pages -->
     <url>
-        <loc>https://spmb.smkpasundan2.sch.id/public/daftar.php</loc>
+        <loc>https://spmb-pasundan2.my.id/public/daftar.php</loc>
         <lastmod><?= date('Y-m-d') ?></lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.8</priority>
     </url>
     <url>
-        <loc>https://spmb.smkpasundan2.sch.id/public/cek_status.php</loc>
+        <loc>https://spmb-pasundan2.my.id/public/cek_status.php</loc>
         <lastmod><?= date('Y-m-d') ?></lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.7</priority>
@@ -24,31 +24,31 @@
 
     <!-- Jurusan Pages -->
     <url>
-        <loc>https://spmb.smkpasundan2.sch.id/public/jurusan.php?jenis=TKJ</loc>
+        <loc>https://spmb-pasundan2.my.id/public/jurusan.php?jenis=TKJ</loc>
         <lastmod><?= date('Y-m-d') ?></lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>
     </url>
     <url>
-        <loc>https://spmb.smkpasundan2.sch.id/public/jurusan.php?jenis=TKR</loc>
+        <loc>https://spmb-pasundan2.my.id/public/jurusan.php?jenis=TKR</loc>
         <lastmod><?= date('Y-m-d') ?></lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>
     </url>
     <url>
-        <loc>https://spmb.smkpasundan2.sch.id/public/jurusan.php?jenis=TPM</loc>
+        <loc>https://spmb-pasundan2.my.id/public/jurusan.php?jenis=TPM</loc>
         <lastmod><?= date('Y-m-d') ?></lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>
     </url>
     <url>
-        <loc>https://spmb.smkpasundan2.sch.id/public/jurusan.php?jenis=TSM</loc>
+        <loc>https://spmb-pasundan2.my.id/public/jurusan.php?jenis=TSM</loc>
         <lastmod><?= date('Y-m-d') ?></lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>
     </url>
     <url>
-        <loc>https://spmb.smkpasundan2.sch.id/public/jurusan.php?jenis=TAV</loc>
+        <loc>https://spmb-pasundan2.my.id/public/jurusan.php?jenis=TAV</loc>
         <lastmod><?= date('Y-m-d') ?></lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>
