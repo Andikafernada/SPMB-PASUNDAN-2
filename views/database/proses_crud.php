@@ -10,7 +10,7 @@ include '../../config.php';
 // ============================================
 // 1. AUTHENTICATION & AUTHORIZATION
 // ============================================
-if (!isset($_SESSION['role']) || strtolower($_SESSION['role']) !== 'database') {
+if (!isset($_SESSION['role']) || !in_array(strtolower($_SESSION['role']), ['database', 'superuser', 'superuser1'])) {
     show_error_page("Akses Ditolak", "Halaman ini hanya untuk Tim Database.");
 }
 
@@ -93,6 +93,11 @@ $pekerjaan_ibu = clean_input($_POST['pekerjaan_ibu'] ?? '');
 $nilai_btq = max(0, min(100, (int)($_POST['nilai_btq'] ?? 0)));
 $request_kelas = clean_upper($_POST['request_kelas'] ?? '');
 
+// Prepare nullable date fields (elvis operator can't be used inline in bind_param)
+$tgl_lahir_val = !empty($tanggal_lahir) ? $tanggal_lahir : null;
+$tgl_lahir_ayah_val = !empty($tgl_lahir_ayah) ? $tgl_lahir_ayah : null;
+$tgl_lahir_ibu_val = !empty($tgl_lahir_ibu) ? $tgl_lahir_ibu : null;
+
 // ============================================
 // 6. ENSURE COLUMNS EXIST (Safe ALTER TABLE)
 // ============================================
@@ -150,7 +155,6 @@ $sql = "UPDATE siswa SET
     nik = ?,
     sekolah_asal = ?,
     nama_jalan = ?,
-    alamat = ?,
     rt = ?,
     rw = ?,
     kelurahan = ?,
@@ -174,20 +178,19 @@ WHERE id_siswa = ?";
 $stmt = mysqli_prepare($conn, $sql);
 
 if ($stmt) {
-    // Bind 32 parameters + 1 WHERE clause = 33 total
+    // 29 parameters total: 27 strings + 2 integers (nilai_btq, id_siswa)
     mysqli_stmt_bind_param(
         $stmt,
-        "ssssssssssssssssssssssiiisssi",
+        "sssssssssssssssssssssssssssii",
         $nama_lengkap,
         $jenis_kelamin,
         $tempat_lahir,
-        $tanggal_lahir ?: null,
+        $tgl_lahir_val,
         $agama,
         $no_hp,
         $nisn,
         $nik,
         $sekolah_asal,
-        $nama_jalan,
         $nama_jalan,
         $rt,
         $rw,
@@ -198,12 +201,12 @@ if ($stmt) {
         $nama_ayah,
         $nik_ayah,
         $tempat_lahir_ayah,
-        $tgl_lahir_ayah ?: null,
+        $tgl_lahir_ayah_val,
         $pekerjaan_ayah,
         $nama_ibu,
         $nik_ibu,
         $tempat_lahir_ibu,
-        $tgl_lahir_ibu ?: null,
+        $tgl_lahir_ibu_val,
         $pekerjaan_ibu,
         $nilai_btq,
         $request_kelas,
@@ -212,11 +215,14 @@ if ($stmt) {
 
     if (mysqli_stmt_execute($stmt)) {
         mysqli_stmt_close($stmt);
+        error_log("EDIT SUCCESS: id_siswa=$id_siswa by " . ($_SESSION['nama'] ?? 'unknown'));
         header("Location: index.php?status=success_edit");
         exit();
     } else {
         mysqli_stmt_close($stmt);
-        show_error_page("Error Database", mysqli_error($conn));
+        $error_msg = mysqli_error($conn);
+        error_log("EDIT FAILED: id_siswa=$id_siswa - " . $error_msg);
+        show_error_page("Error Database", $error_msg);
     }
 } else {
     show_error_page("Error Prepare", mysqli_error($conn));
