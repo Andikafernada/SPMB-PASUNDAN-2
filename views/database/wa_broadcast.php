@@ -369,6 +369,10 @@ $total_siswa = mysqli_num_rows($result_siswa);
                     preview = preview.replace(/\{JURUSAN_LAMA\}/gi, '-');
                     preview = preview.replace(/\{JURUSAN_BARU\}/gi, '-');
                     preview = preview.replace(/\{ALASAN\}/gi, '-');
+
+                    // Additional placeholders for REMINDER_DAFTAR_ULANG
+                    preview = preview.replace(/\{NO_HP\}/gi, firstChecked.dataset.hp || '083817203455');
+                    preview = preview.replace(/\{TANGGAL\}/gi, new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }));
                 }
 
                 // Convert \n to actual newlines and escape HTML

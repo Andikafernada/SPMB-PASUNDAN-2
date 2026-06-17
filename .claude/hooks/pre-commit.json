@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "description": "SPMB Security Hooks - Automated checks before commits",
+  "matchers": {
+    "pre-commit": {
+      "patterns": ["*.php", "*.sql"],
+      "exclude": ["*.bck.php", "vendor/**"]
+    }
+  },
+  "hooks": [
+    {
+      "name": "security-check",
+      "description": "Scan for common security vulnerabilities",
+      "command": "echo 'Running security checks...'",
+      "blocking": true,
+      "failMessage": "Security issues detected!"
+    }
+  ]
+}

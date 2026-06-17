@@ -517,6 +517,14 @@ function preview_wa_template($template_text, $jenis = 'acc') {
             'gelombang' => 'Gelombang 2',
             'biaya' => '175.000',
             'admin' => 'Admin'
+        ],
+        'reminder_du' => [
+            'nama' => 'Fajar Nugroho',
+            'id_daftar' => 'SPMB26-003',
+            'jurusan' => 'Teknik Kendaraan Ringan',
+            'tanggal' => '25 Juni 2026',
+            'no_hp' => '083817203455',
+            'admin' => 'Panitia PPDB'
         ]
     ];
     
