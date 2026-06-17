@@ -497,14 +497,26 @@ $total_siswa = mysqli_num_rows($result_siswa);
             selectAll.checked = false;
             updateSelectedCount();
 
-            // Success notification
+            // Add "View History" button
             await Swal.fire({
                 title: 'Broadcast Selesai!',
-                text: `Berhasil: ${success}, Gagal: ${failed}`,
+                html: `Berhasil: <b>${success}</b><br>Gagal: <b>${failed}</b><br><br>
+                       <a href="wa_broadcast_history.php" class="text-indigo-600 hover:underline font-bold">📜 Lihat History →</a>`,
                 icon: failed > 0 ? 'warning' : 'success',
-                confirmButtonText: 'OK',
+                confirmButtonText: 'Tutup',
                 confirmButtonColor: '#4f46e5',
             });
+
+            // Optional: Auto refresh history page in background
+            if (success > 0) {
+                // Pre-fetch history count
+                fetch('wa_broadcast_history.php?ajax=stats')
+                    .then(r => r.json())
+                    .then(data => {
+                        console.log('History updated:', data);
+                    })
+                    .catch(() => {});
+            }
         });
     </script>
 </body>

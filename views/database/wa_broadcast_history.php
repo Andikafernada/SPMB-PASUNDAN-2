@@ -7,7 +7,37 @@ include '../../config.php';
 
 // Check session and role
 if (!isset($_SESSION['role']) || !in_array(strtolower($_SESSION['role']), ['database', 'superuser', 'superuser1'])) {
-    header("Location: ../../index.php");
+    if (isset($_GET['ajax']) && $_GET['ajax'] == 'stats') {
+        header('Content-Type: application/json');
+        echo json_encode(['error' => 'Unauthorized']);
+    } else {
+        header("Location: ../../index.php");
+    }
+    exit();
+}
+
+// ============================================
+// AJAX: Get real-time statistics
+// ============================================
+if (isset($_GET['ajax']) && $_GET['ajax'] == 'stats') {
+    header('Content-Type: application/json');
+
+    $stats = mysqli_fetch_assoc(mysqli_query($conn, "
+        SELECT
+            COUNT(*) as total,
+            SUM(status = 'success') as sukses,
+            SUM(status = 'failed') as gagal,
+            MAX(created_at) as last_update
+        FROM wa_broadcast_history
+    "));
+
+    echo json_encode([
+        'success' => true,
+        'total' => (int)$stats['total'],
+        'sukses' => (int)($stats['sukses'] ?? 0),
+        'gagal' => (int)($stats['gagal'] ?? 0),
+        'last_update' => $stats['last_update']
+    ]);
     exit();
 }
 
@@ -114,6 +144,9 @@ $templates = mysqli_query($conn, "SELECT DISTINCT template_kode, template_nama F
             </div>
         </div>
         <div class="flex items-center gap-3">
+            <button onclick="refreshHistory()" id="btn-refresh" class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-xl text-xs font-bold text-indigo-600 transition-all">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
             <span class="text-[10px] font-bold text-slate-400"><?= htmlspecialchars($_SESSION['nama'] ?? 'ADMIN') ?></span>
         </div>
     </div>
@@ -130,14 +163,14 @@ $templates = mysqli_query($conn, "SELECT DISTINCT template_kode, template_nama F
             FROM wa_broadcast_history
         "));
         ?>
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6" id="stats-container">
             <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
                 <div class="flex items-center gap-3">
                     <div class="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center">
                         <i class="fas fa-paper-plane text-indigo-600"></i>
                     </div>
                     <div>
-                        <div class="text-2xl font-black text-slate-900"><?= number_format($stats['total']) ?></div>
+                        <div class="text-2xl font-black text-slate-900" id="stat-total"><?= number_format($stats['total']) ?></div>
                         <div class="text-xs text-slate-500">Total Pesan</div>
                     </div>
                 </div>
@@ -148,7 +181,7 @@ $templates = mysqli_query($conn, "SELECT DISTINCT template_kode, template_nama F
                         <i class="fas fa-check text-emerald-600"></i>
                     </div>
                     <div>
-                        <div class="text-2xl font-black text-emerald-600"><?= number_format($stats['sukses'] ?? 0) ?></div>
+                        <div class="text-2xl font-black text-emerald-600" id="stat-success"><?= number_format($stats['sukses'] ?? 0) ?></div>
                         <div class="text-xs text-slate-500">Berhasil</div>
                     </div>
                 </div>
@@ -159,7 +192,7 @@ $templates = mysqli_query($conn, "SELECT DISTINCT template_kode, template_nama F
                         <i class="fas fa-times text-red-600"></i>
                     </div>
                     <div>
-                        <div class="text-2xl font-black text-red-600"><?= number_format($stats['gagal'] ?? 0) ?></div>
+                        <div class="text-2xl font-black text-red-600" id="stat-failed"><?= number_format($stats['gagal'] ?? 0) ?></div>
                         <div class="text-xs text-slate-500">Gagal</div>
                     </div>
                 </div>
@@ -309,6 +342,35 @@ $templates = mysqli_query($conn, "SELECT DISTINCT template_kode, template_nama F
     </div>
 
     <script>
+        // Auto refresh stats every 5 seconds
+        let autoRefreshInterval;
+
+        function refreshHistory() {
+            const btn = document.getElementById('btn-refresh');
+            btn.classList.add('animate-spin');
+            btn.innerHTML = '<i class="fas fa-spinner"></i> Loading...';
+
+            fetch('wa_broadcast_history.php?ajax=stats')
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('stat-total').textContent = data.total;
+                        document.getElementById('stat-success').textContent = data.sukses;
+                        document.getElementById('stat-failed').textContent = data.gagal;
+                    }
+                })
+                .catch(err => console.error('Refresh error:', err))
+                .finally(() => {
+                    btn.classList.remove('animate-spin');
+                    btn.innerHTML = '<i class="fas fa-sync-alt"></i> Refresh';
+                });
+        }
+
+        // Start auto-refresh
+        function startAutoRefresh() {
+            autoRefreshInterval = setInterval(refreshHistory, 5000);
+        }
+
         function showMessage(text) {
             document.getElementById('messageContent').textContent = text;
             document.getElementById('messageModal').classList.remove('hidden');
@@ -323,6 +385,9 @@ $templates = mysqli_query($conn, "SELECT DISTINCT template_kode, template_nama F
         document.getElementById('messageModal').addEventListener('click', function(e) {
             if (e.target === this) closeModal();
         });
+
+        // Start auto-refresh when page loads
+        startAutoRefresh();
     </script>
 </body>
 </html>
