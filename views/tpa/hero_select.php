@@ -148,17 +148,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['select_hero'])) {
     <style>
         * { font-family: 'Plus Jakarta Sans', sans-serif; }
         .font-game { font-family: 'Orbitron', sans-serif; }
-        
+
         body { background: radial-gradient(circle at center, #1a1a2e 0%, #0f0f15 100%); min-height: 100vh; overflow: hidden; color: white; }
-        
+
         /* CSS ANIMATION UNTUK HOLOGRAM HERO */
         @keyframes float {
             0%, 100% { transform: translateY(0px) scale(1); }
-            50% { transform: translateY(-20px) scale(1.05); }
+            50% { transform: translateY(-15px) scale(1.05); }
         }
         @keyframes spin-slow { 100% { transform: rotate(360deg); } }
         @keyframes spin-reverse-slow { 100% { transform: rotate(-360deg); } }
-        
+
         .animate-float { animation: float 4s ease-in-out infinite; }
         .animate-spin-slow { animation: spin-slow 15s linear infinite; }
         .animate-spin-reverse-slow { animation: spin-reverse-slow 10s linear infinite; }
@@ -167,60 +167,81 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['select_hero'])) {
         .hologram-container.fade-out { opacity: 0; transform: scale(0.8); }
 
         /* Roster Selection Menu */
-        .roster-item { 
-            width: 60px; height: 60px; border: 2px solid rgba(255,255,255,0.2); 
+        .roster-item {
+            width: 48px; height: 48px; border: 2px solid rgba(255,255,255,0.2);
             clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
             background: #2a2a40; transition: all 0.3s ease; cursor: pointer;
-            display: flex; justify-content: center; align-items: center; font-size: 1.5rem;
+            display: flex; justify-content: center; align-items: center; font-size: 1.2rem;
             filter: grayscale(100%); opacity: 0.6;
         }
         .roster-item:hover { filter: grayscale(0%); opacity: 1; transform: translateY(-5px); }
         .roster-item.active { filter: grayscale(0%); opacity: 1; border-color: var(--hero-color); box-shadow: 0 0 15px var(--hero-color); background: var(--hero-color); transform: scale(1.1); }
-        
+
         .stat-bar { background: rgba(255,255,255,0.1); height: 8px; border-radius: 4px; overflow: hidden; }
         .stat-fill { height: 100%; border-radius: 4px; transition: width 1s cubic-bezier(0.4, 0, 0.2, 1); width: 0; }
-        
+
         .btn-lock { transition: all 0.3s; }
         .btn-lock:hover { filter: brightness(1.2); transform: scale(1.02); }
+
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+            .hologram-icon { font-size: 5rem !important; }
+            .hero-glow-size { width: 160px !important; height: 160px !important; }
+            .hero-info-section { padding-bottom: 100px !important; }
+            .roster-section { bottom: 16px !important; }
+            .header-section { padding: 12px !important; }
+            .header-title { font-size: 0.9rem !important; }
+            .header-badge { font-size: 0.7rem !important; padding: 6px 12px !important; }
+            .hero-name-text { font-size: 1.75rem !important; }
+            .hero-class-text { font-size: 0.7rem !important; }
+            .hero-title-text { font-size: 0.85rem !important; }
+            .hero-desc-text { font-size: 0.8rem !important; max-width: 100% !important; }
+            .btn-lock-text { font-size: 1rem !important; padding: 14px !important; }
+        }
+
+        @media (max-width: 480px) {
+            .roster-item { width: 42px; height: 42px; font-size: 1rem; }
+            .hologram-icon { font-size: 4rem !important; }
+        }
     </style>
 </head>
 <body class="flex flex-col">
 
-    <header class="absolute top-0 w-full p-6 flex justify-between items-center z-50">
+    <header class="header-section absolute top-0 w-full p-4 md:p-6 flex justify-between items-center z-50">
         <div>
-            <h1 class="font-game text-xl text-gray-300">Welcome, <span class="text-white font-bold"><?= htmlspecialchars($nama) ?></span></h1>
+            <h1 class="header-title font-game text-base md:text-xl text-gray-300">Welcome, <span class="text-white font-bold"><?= htmlspecialchars($nama) ?></span></h1>
             <p class="text-xs text-yellow-400 font-game tracking-widest"><?= htmlspecialchars($id_reg) ?></p>
         </div>
-        <div class="px-6 py-2 bg-black/50 border border-white/10 rounded-full backdrop-blur-md text-sm font-game">
+        <div class="header-badge px-3 md:px-6 py-1 md:py-2 bg-black/50 border border-white/10 rounded-full backdrop-blur-md text-xs md:text-sm font-game">
             SELECT YOUR HERO
         </div>
     </header>
 
-    <main class="flex-1 flex flex-col md:flex-row relative h-screen w-full items-center justify-center pt-10 px-10">
-        
-        <div class="w-full md:w-1/2 flex justify-center items-center h-[50vh] md:h-full relative z-10">
-            <div id="hero-glow" class="absolute w-64 h-64 md:w-96 md:h-96 rounded-full blur-[80px] opacity-20 transition-colors duration-500" style="background-color: <?= $default_hero['color'] ?>"></div>
-            
-            <div id="hologram-box" class="hologram-container relative flex justify-center items-center w-64 h-64 md:w-80 md:h-80 text-[<?= $default_hero['color'] ?>]" style="color: <?= $default_hero['color'] ?>;">
-                
+    <main class="flex-1 flex flex-col lg:flex-row relative w-full items-center justify-center pt-16 md:pt-20 px-4 md:px-10 pb-32 md:pb-0">
+
+        <div class="w-full lg:w-1/2 flex justify-center items-center h-[35vh] md:h-[50vh] lg:h-screen relative z-10">
+            <div id="hero-glow" class="hero-glow-size absolute w-48 h-48 md:w-64 md:h-64 lg:w-96 lg:h-96 rounded-full blur-[80px] opacity-20 transition-colors duration-500" style="background-color: <?= $default_hero['color'] ?>"></div>
+
+            <div id="hologram-box" class="hologram-container relative flex justify-center items-center w-48 h-48 md:w-64 md:h-64 lg:w-80 lg:h-80 text-[<?= $default_hero['color'] ?>]" style="color: <?= $default_hero['color'] ?>;">
+
                 <div class="absolute inset-0 rounded-full border-[3px] border-dashed border-current opacity-60 animate-spin-slow" style="filter: drop-shadow(0 0 10px currentColor);"></div>
-                
+
                 <div class="absolute inset-6 rounded-full border border-solid border-current opacity-40 animate-spin-reverse-slow"></div>
-                
+
                 <div class="absolute bottom-0 w-3/4 h-1/2 bg-gradient-to-t from-current to-transparent opacity-20 rounded-full blur-md" style="transform: perspective(200px) rotateX(60deg);"></div>
 
-                <i id="main-hero-icon" class="fas <?= $default_hero['fa_icon'] ?> text-8xl md:text-9xl animate-float" style="filter: drop-shadow(0 0 25px currentColor);"></i>
+                <i id="main-hero-icon" class="fas <?= $default_hero['fa_icon'] ?> hologram-icon text-6xl md:text-8xl lg:text-9xl animate-float" style="filter: drop-shadow(0 0 25px currentColor);"></i>
             </div>
         </div>
 
-        <div class="w-full md:w-1/2 flex flex-col justify-center h-full z-20 pl-0 md:pl-10 pb-20 md:pb-0 text-center md:text-left">
-            <h3 id="hero-class" class="text-yellow-400 font-game text-sm tracking-widest uppercase mb-1"><?= $default_hero['class'] ?></h3>
-            <h2 id="hero-name" class="font-game text-4xl md:text-6xl font-black italic mb-2 tracking-tighter" style="color: white; text-shadow: 2px 2px 0px <?= $default_hero['color'] ?>;"><?= strtoupper($default_hero['name']) ?></h2>
-            <p id="hero-title" class="text-gray-400 text-md md:text-lg mb-4 md:mb-6 border-b-2 md:border-b-0 md:border-l-4 pb-2 md:pb-0 md:pl-3 mx-auto md:mx-0 w-fit" style="border-color: <?= $default_hero['color'] ?>;"><?= $default_hero['title'] ?></p>
-            
-            <p id="hero-desc" class="text-gray-300 mb-6 max-w-md text-sm leading-relaxed mx-auto md:mx-0"><?= $default_hero['description'] ?></p>
+        <div class="hero-info-section w-full lg:w-1/2 flex flex-col justify-center lg:h-screen z-20 lg:pl-10 text-center lg:text-left">
+            <h3 id="hero-class" class="hero-class-text text-yellow-400 font-game text-xs md:text-sm tracking-widest uppercase mb-1"><?= $default_hero['class'] ?></h3>
+            <h2 id="hero-name" class="hero-name-text font-game text-2xl md:text-4xl lg:text-6xl font-black italic mb-2 tracking-tighter" style="color: white; text-shadow: 2px 2px 0px <?= $default_hero['color'] ?>;"><?= strtoupper($default_hero['name']) ?></h2>
+            <p id="hero-title" class="hero-title-text text-gray-400 text-sm md:text-md lg:text-lg mb-3 md:mb-4 lg:mb-6 border-b-2 lg:border-b-0 lg:border-l-4 pb-2 md:pb-0 lg:pb-0 lg:pl-3 mx-auto lg:mx-0 w-fit" style="border-color: <?= $default_hero['color'] ?>;"><?= $default_hero['title'] ?></p>
 
-            <div id="hero-stats" class="space-y-4 max-w-md mb-8 mx-auto md:mx-0 w-full">
+            <p id="hero-desc" class="hero-desc-text text-gray-300 mb-4 md:mb-6 max-w-md text-sm leading-relaxed mx-auto lg:mx-0"><?= $default_hero['description'] ?></p>
+
+            <div id="hero-stats" class="space-y-2 md:space-y-3 lg:space-y-4 max-w-md mb-4 md:mb-6 lg:mb-8 mx-auto lg:mx-0 w-full px-2">
                 <?php foreach ($default_hero['stats'] as $stat): ?>
                 <div>
                     <div class="flex justify-between text-xs mb-1 font-bold">
@@ -233,20 +254,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['select_hero'])) {
                 <?php endforeach; ?>
             </div>
 
-            <form action="" method="POST" class="w-full max-w-md mx-auto md:mx-0">
+            <form action="" method="POST" class="w-full max-w-md mx-auto lg:mx-0 px-2">
                 <input type="hidden" name="hero_id" id="selected-hero" value="<?= $default_hero['id'] ?>">
-                <button type="submit" name="select_hero" id="btn-submit" class="btn-lock w-full py-4 rounded-lg font-game font-bold text-xl uppercase tracking-widest text-white shadow-[0_0_20px_currentColor]" style="background-color: <?= $default_hero['color'] ?>; color: <?= $default_hero['color'] ?>;">
+                <button type="submit" name="select_hero" id="btn-submit" class="btn-lock btn-lock-text w-full py-3 md:py-4 rounded-lg font-game font-bold text-base md:text-xl uppercase tracking-wider text-white shadow-[0_0_20px_currentColor]" style="background-color: <?= $default_hero['color'] ?>; color: <?= $default_hero['color'] ?>;">
                     <span class="text-white">LOCK HERO</span>
                 </button>
             </form>
         </div>
     </main>
 
-    <div class="absolute bottom-6 w-full flex justify-center gap-3 md:gap-5 z-50">
+    <div class="roster-section absolute bottom-4 md:bottom-6 w-full flex justify-center gap-2 md:gap-3 lg:gap-5 z-50 px-4">
         <?php foreach ($heroes as $code => $hero): ?>
-            <div class="roster-item <?= ($hero['id'] == $default_hero['id']) ? 'active' : '' ?>" 
+            <div class="roster-item <?= ($hero['id'] == $default_hero['id']) ? 'active' : '' ?>"
                  style="--hero-color: <?= $hero['color'] ?>"
-                 onclick='changeHero(<?= json_encode($hero) ?>, this)'>
+                 onclick='changeHero(<?= json_encode($hero) ?>, this)'
+                 title="<?= $hero['name'] ?>">
                  <?= $hero['avatar'] ?>
             </div>
         <?php endforeach; ?>
@@ -262,12 +284,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['select_hero'])) {
             // Animasikan perubahan Hologram
             const hologramBox = document.getElementById('hologram-box');
             hologramBox.classList.add('fade-out');
-            
+
             setTimeout(() => {
-                // Ganti Icon FontAwesome
+                // Ganti Icon FontAwesome - responsive sizing handled by CSS
                 const iconElement = document.getElementById('main-hero-icon');
-                iconElement.className = `fas ${heroData.fa_icon} text-8xl md:text-9xl animate-float`;
-                
+                iconElement.className = `fas ${heroData.fa_icon} hologram-icon animate-float`;
+
                 // Ganti Warna Hologram
                 hologramBox.style.color = heroData.color;
                 document.getElementById('hero-glow').style.backgroundColor = heroData.color;
@@ -282,7 +304,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['select_hero'])) {
             document.getElementById('hero-title').innerText = heroData.title;
             document.getElementById('hero-title').style.borderColor = heroData.color;
             document.getElementById('hero-desc').innerText = heroData.description;
-            
+
             // Update Tombol Submit
             const btn = document.getElementById('btn-submit');
             btn.style.backgroundColor = heroData.color;

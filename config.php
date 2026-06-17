@@ -434,7 +434,11 @@ function kirim_wa_template($conn, $kode_template, $payload, $no_hp) {
         return false;
     }
 
-    $evo_url = rtrim($evo_base_url, '/') . "/message/sendText/$evo_instance";
+    // Format nomor HP ke format internasional (62xxx)
+    $no_hp = format_wa_number($no_hp);
+
+    // Construct Evolution API URL - endpoint untuk kirim pesan
+    $evo_url = rtrim($evo_base_url, '/') . '/message/sendText/' . urlencode($evo_instance);
 
     // Format Evolution API v2
     $evo_data = [

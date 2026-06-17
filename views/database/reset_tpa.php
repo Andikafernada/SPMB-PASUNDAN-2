@@ -19,7 +19,7 @@ $jurusan_list = [
 ];
 
 // Proteksi session
-if (!isset($_SESSION['role']) || !in_array(strtolower($_SESSION['role']), ['database', 'superuser'])) {
+if (!isset($_SESSION['role']) || !in_array(strtolower($_SESSION['role']), ['database', 'superuser', 'superuser1'])) {
     header("Location: ../../login.php");
     exit();
 }

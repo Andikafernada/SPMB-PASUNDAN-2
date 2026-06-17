@@ -8,7 +8,7 @@ session_start();
 include '../../config.php';
 
 // Hanya superuser yang boleh
-if (!isset($_SESSION['role']) || !in_array(strtolower($_SESSION['role']), ['superuser','database'])) {
+if (!isset($_SESSION['role']) || !in_array(strtolower($_SESSION['role']), ['superuser','database','superuser1'])) {
     http_response_code(403);
     echo json_encode(['ok' => false, 'msg' => 'Akses ditolak.']);
     exit();

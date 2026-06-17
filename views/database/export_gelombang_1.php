@@ -2,7 +2,7 @@
 session_start();
 include '../../config.php';
 
-if(!isset($_SESSION['role']) || !in_array(strtolower($_SESSION['role']), ['database','superuser'])) {
+if(!isset($_SESSION['role']) || !in_array(strtolower($_SESSION['role']), ['database','superuser','superuser1'])) {
     show_error_page("Akses Ditolak", "Halaman ini hanya untuk Tim Database.");
 }
 

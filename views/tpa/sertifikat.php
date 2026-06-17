@@ -373,8 +373,8 @@ $share_code  = strtoupper(substr($siswa['nama_lengkap'], 0, 3)) . '-' . $id_sisw
   <div class="school-info">
     <div class="school-name">SMK PASUNDAN 2 BANDUNG</div>
     <div class="school-detail">
-      Jl. Riau No. 7 Bandung 40112 &nbsp;|&nbsp; Telp. (022) 7310119<br>
-      Email: info@smkpasundan2.sch.id &nbsp;|&nbsp; Web: smkpasundan2.sch.id
+      Jl. Pelita Karya I No.2, Maleber, Kec. Andir, Kota Bandung, Jawa Barat 40184<br>
+      Telp. (022) 7310119 &nbsp;|&nbsp; Email: info@smkpasundan2.sch.id
     </div>
   </div>
 </div>

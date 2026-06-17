@@ -10,8 +10,8 @@ include '../../config.php';
 require_admin_ip();
 
 // Check session
-if (!isset($_SESSION['role']) || !in_array(strtolower($_SESSION['role']), ['database','superuser'])) {
-    header("Location: ../../panitia/index.php"); 
+if (!isset($_SESSION['role']) || !in_array(strtolower($_SESSION['role']), ['database','superuser','superuser1'])) {
+    header("Location: ../../panitia/index.php");
     exit();
 }
 

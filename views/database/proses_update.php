@@ -40,7 +40,7 @@ function tampilkan_error($judul, $pesan) {
 // ============================================
 // 1. AUTHENTICATION
 // ============================================
-if (!isset($_SESSION['role']) || strtolower($_SESSION['role']) !== 'database') {
+if (!isset($_SESSION['role']) || !in_array(strtolower($_SESSION['role']), ['database', 'superuser', 'superuser1'])) {
     tampilkan_error("Akses Ditolak", "Halaman atau tindakan ini hanya bisa dieksekusi oleh Tim Database dan Superuser.");
 }
 
