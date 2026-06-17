@@ -172,7 +172,12 @@ $total_siswa = mysqli_num_rows($result_siswa);
                                     <td class="px-4 py-3 font-mono text-xs font-bold text-indigo-600"><?= htmlspecialchars($s['id_pendaftaran'] ?: '-') ?></td>
                                     <td class="px-4 py-3 font-medium"><?= htmlspecialchars($s['nama_lengkap']) ?></td>
                                     <td class="px-4 py-3 text-slate-500"><?= htmlspecialchars($s['jurusan']) ?></td>
-                                    <td class="px-4 py-3 font-mono text-xs text-emerald-600"><?= htmlspecialchars($s['no_hp']) ?></td>
+                                    <td class="px-4 py-3 font-mono text-xs <?= !empty($s['no_hp']) && validate_phone_display($s['no_hp']) ? 'text-emerald-600' : 'text-red-400' ?>">
+                                        <?= htmlspecialchars($s['no_hp']) ?>
+                                        <?php if (!empty($s['no_hp']) && !validate_phone_display($s['no_hp'])): ?>
+                                            <i class="fas fa-exclamation-circle text-red-400 ml-1" title="Format nomor tidak valid"></i>
+                                        <?php endif; ?>
+                                    </td>
                                     <td class="px-4 py-3">
                                         <?php if ($s['status_siswa'] == 'SUDAH DAFTAR ULANG'): ?>
                                             <span class="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded-full">DU</span>
@@ -281,6 +286,19 @@ $total_siswa = mysqli_num_rows($result_siswa);
             </div>
         </div>
     </div>
+
+    <?php
+    // Helper function for phone validation display
+    function validate_phone_display($hp) {
+        $hp = preg_replace('/[^0-9]/', '', $hp);
+        if (strlen($hp) < 10 || strlen($hp) > 15) return false;
+        $valid_prefixes = ['6281', '6282', '6283', '6284', '6285', '6286', '6287', '6288', '6289', '6280'];
+        foreach ($valid_prefixes as $prefix) {
+            if (substr($hp, 0, strlen($prefix)) === $prefix) return true;
+        }
+        return false;
+    }
+    ?>
 
     <form id="broadcast-form" method="POST" action="proses_broadcast.php" class="hidden">
         <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(generate_csrf_token()) ?>">

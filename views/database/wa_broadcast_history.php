@@ -19,25 +19,60 @@ if (!isset($_SESSION['role']) || !in_array(strtolower($_SESSION['role']), ['data
 // ============================================
 // AJAX: Get real-time statistics
 // ============================================
-if (isset($_GET['ajax']) && $_GET['ajax'] == 'stats') {
+if (isset($_GET['ajax'])) {
     header('Content-Type: application/json');
+    $ajax_type = $_GET['ajax'];
 
-    $stats = mysqli_fetch_assoc(mysqli_query($conn, "
-        SELECT
-            COUNT(*) as total,
-            SUM(status = 'success') as sukses,
-            SUM(status = 'failed') as gagal,
-            MAX(created_at) as last_update
-        FROM wa_broadcast_history
-    "));
+    switch ($ajax_type) {
+        case 'stats':
+            $stats = mysqli_fetch_assoc(mysqli_query($conn, "
+                SELECT
+                    COUNT(*) as total,
+                    SUM(status = 'success') as sukses,
+                    SUM(status = 'failed') as gagal,
+                    MAX(created_at) as last_update
+                FROM wa_broadcast_history
+            "));
 
-    echo json_encode([
-        'success' => true,
-        'total' => (int)$stats['total'],
-        'sukses' => (int)($stats['sukses'] ?? 0),
-        'gagal' => (int)($stats['gagal'] ?? 0),
-        'last_update' => $stats['last_update']
-    ]);
+            echo json_encode([
+                'success' => true,
+                'total' => (int)$stats['total'],
+                'sukses' => (int)($stats['sukses'] ?? 0),
+                'gagal' => (int)($stats['gagal'] ?? 0),
+                'last_update' => $stats['last_update']
+            ]);
+            break;
+
+        case 'failed':
+            // Get failed messages for retry
+            $result = mysqli_query($conn, "
+                SELECT DISTINCT siswa_id, template_kode, nama_siswa, no_hp
+                FROM wa_broadcast_history
+                WHERE status = 'failed'
+                AND siswa_id IS NOT NULL
+                AND siswa_id > 0
+                ORDER BY created_at DESC
+            ");
+
+            $failed = [];
+            while ($row = mysqli_fetch_assoc($result)) {
+                $failed[] = [
+                    'siswa_id' => $row['siswa_id'],
+                    'template_kode' => $row['template_kode'],
+                    'nama_siswa' => $row['nama_siswa'],
+                    'no_hp' => $row['no_hp']
+                ];
+            }
+
+            echo json_encode([
+                'success' => true,
+                'failed' => $failed
+            ]);
+            break;
+
+        default:
+            echo json_encode(['error' => 'Unknown ajax type']);
+    }
     exit();
 }
 
@@ -143,9 +178,18 @@ $templates = mysqli_query($conn, "SELECT DISTINCT template_kode, template_nama F
                 <p class="text-[10px] text-slate-500">Log semua pesan yang pernah dikirim</p>
             </div>
         </div>
-        <div class="flex items-center gap-3">
-            <button onclick="refreshHistory()" id="btn-refresh" class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-xl text-xs font-bold text-indigo-600 transition-all">
-                <i class="fas fa-sync-alt"></i> Refresh
+        <div class="flex items-center gap-2 flex-wrap justify-end">
+            <!-- Retry Failed Button -->
+            <button onclick="retryFailed()" id="btn-retry" class="inline-flex items-center gap-2 px-3 py-2 bg-red-50 hover:bg-red-100 border border-red-200 rounded-xl text-xs font-bold text-red-600 transition-all">
+                <i class="fas fa-redo"></i> <span class="hidden sm:inline">Retry Gagal</span>
+            </button>
+            <!-- Export Button -->
+            <a href="export_wa_history.php?status=<?= $filter_status ?>&template=<?= $filter_template ?>" class="inline-flex items-center gap-2 px-3 py-2 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-xl text-xs font-bold text-emerald-600 transition-all">
+                <i class="fas fa-file-excel"></i> <span class="hidden sm:inline">Export</span>
+            </a>
+            <!-- Refresh Button -->
+            <button onclick="refreshHistory()" id="btn-refresh" class="inline-flex items-center gap-2 px-3 py-2 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-xl text-xs font-bold text-indigo-600 transition-all">
+                <i class="fas fa-sync-alt"></i> <span class="hidden sm:inline">Refresh</span>
             </button>
             <span class="text-[10px] font-bold text-slate-400"><?= htmlspecialchars($_SESSION['nama'] ?? 'ADMIN') ?></span>
         </div>
@@ -342,6 +386,9 @@ $templates = mysqli_query($conn, "SELECT DISTINCT template_kode, template_nama F
     </div>
 
     <script>
+        // CSRF Token
+        const csrfToken = '<?= htmlspecialchars(generate_csrf_token()) ?>';
+
         // Auto refresh stats every 5 seconds
         let autoRefreshInterval;
 
@@ -362,8 +409,83 @@ $templates = mysqli_query($conn, "SELECT DISTINCT template_kode, template_nama F
                 .catch(err => console.error('Refresh error:', err))
                 .finally(() => {
                     btn.classList.remove('animate-spin');
-                    btn.innerHTML = '<i class="fas fa-sync-alt"></i> Refresh';
+                    btn.innerHTML = '<i class="fas fa-sync-alt"></i> <span class="hidden sm:inline">Refresh</span>';
                 });
+        }
+
+        // Retry Failed Messages
+        async function retryFailed() {
+            // First, get list of failed messages
+            const response = await fetch('wa_broadcast_history.php?ajax=failed', {
+                headers: { 'X-CSRF-TOKEN': csrfToken }
+            });
+            const data = await response.json();
+
+            if (!data.failed || data.failed.length === 0) {
+                Swal.fire({
+                    title: 'Tidak Ada yang Gagal',
+                    text: 'Semua pesan sudah berhasil dikirim!',
+                    icon: 'success',
+                    confirmButtonColor: '#4f46e5'
+                });
+                return;
+            }
+
+            const result = await Swal.fire({
+                title: 'Retry Pesan Gagal',
+                html: `Ditemukan <b>${data.failed.length}</b> pesan yang gagal.<br>Apakah ingin dikirim ulang?`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Ya, Kirim Ulang!',
+                cancelButtonText: 'Batal',
+                confirmButtonColor: '#dc2626'
+            });
+
+            if (!result.isConfirmed) return;
+
+            // Show loading
+            Swal.fire({
+                title: 'Memproses...',
+                html: 'Mengirim ulang pesan yang gagal...',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            let success = 0;
+            let failed = 0;
+
+            for (const item of data.failed) {
+                try {
+                    const formData = new FormData();
+                    formData.append('csrf_token', csrfToken);
+                    formData.append('siswa_id', item.siswa_id);
+                    formData.append('template_kode', item.template_kode);
+                    formData.append('retry', '1');
+
+                    const res = await fetch('proses_broadcast.php', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const result = await res.json();
+                    if (result.success) {
+                        success++;
+                    } else {
+                        failed++;
+                    }
+                } catch (e) {
+                    failed++;
+                }
+            }
+
+            Swal.fire({
+                title: failed === 0 ? 'Berhasil!' : 'Selesai',
+                html: `Berhasil: <b>${success}</b><br>Gagal: <b>${failed}</b>`,
+                icon: failed === 0 ? 'success' : 'warning',
+                confirmButtonColor: '#4f46e5'
+            });
+
+            refreshHistory();
         }
 
         // Start auto-refresh
