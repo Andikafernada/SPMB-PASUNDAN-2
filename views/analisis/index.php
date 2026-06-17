@@ -134,8 +134,10 @@ body{background:var(--bg);color:var(--text);min-height:100vh;
 .topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 36px;
     background:rgba(2,6,23,0.95);border-bottom:1px solid var(--border);
     position:sticky;top:0;z-index:100;backdrop-filter:blur(20px);}
-.topbar-logo{font-size:1rem;font-weight:800;color:#fff;}
+.topbar-logo{font-size:1rem;font-weight:800;color:#fff;display:flex;align-items:center;gap:12px;}
 .topbar-logo span{color:var(--accent);}
+.topbar-logo .back-link{color:var(--muted);transition:0.2s;}
+.topbar-logo .back-link:hover{color:var(--accent);}
 .topbar-right{display:flex;gap:10px;align-items:center;}
 .btn-sm{padding:8px 16px;border-radius:10px;font-size:0.72rem;font-weight:800;
     text-decoration:none;cursor:pointer;border:none;transition:0.2s;display:inline-flex;align-items:center;gap:7px;}
@@ -143,6 +145,13 @@ body{background:var(--bg);color:var(--text);min-height:100vh;
 .btn-back:hover{color:#fff;}
 .btn-danger{background:rgba(239,68,68,0.1);color:var(--red);border:1px solid rgba(239,68,68,0.2);}
 .btn-danger:hover{background:rgba(239,68,68,0.2);}
+
+/* BREADCRUMB */
+.breadcrumb{display:flex;align-items:center;gap:8px;font-size:0.85rem;}
+.breadcrumb a{color:var(--muted);text-decoration:none;transition:0.2s;display:flex;align-items:center;gap:4px;}
+.breadcrumb a:hover{color:var(--accent);}
+.breadcrumb span{color:var(--muted);}
+.breadcrumb .current{color:#fff;font-weight:600;}
 
 /* MAIN */
 .main{padding:28px 36px;max-width:1400px;margin:0 auto;}
@@ -382,7 +391,10 @@ body{background:var(--bg);color:var(--text);min-height:100vh;
 
 <!-- TOPBAR -->
 <div class="topbar">
-    <div class="topbar-logo">SMK <span>PASUNDAN 2</span> — ANALISIS SPMB</div>
+    <div class="topbar-logo">
+        <a href="../database/index.php" class="back-link"><i class="fas fa-arrow-left"></i></a>
+        SMK <span>PASUNDAN 2</span> — ANALISIS SPMB
+    </div>
     <div class="topbar-right">
         <a href="export_analisis.php?tahun=<?= $tahun_dipilih ?>" class="btn-sm"
            style="background:rgba(16,185,129,0.1);color:#10b981;border:1px solid rgba(16,185,129,0.2);">
@@ -395,6 +407,17 @@ body{background:var(--bg);color:var(--text);min-height:100vh;
         <?php endif; ?>
         <a href="../database/index.php" class="btn-sm btn-back"><i class="fas fa-arrow-left"></i> Dashboard</a>
     </div>
+</div>
+
+<!-- BREADCRUMB -->
+<div class="container mx-auto px-6 py-4">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="../../"><i class="fas fa-home"></i></a>
+        <span>/</span>
+        <a href="../database/index.php">Database</a>
+        <span>/</span>
+        <span class="current">Analisis</span>
+    </nav>
 </div>
 
 <div class="main">

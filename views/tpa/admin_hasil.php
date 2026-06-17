@@ -174,6 +174,20 @@ $csrf_token = generate_csrf_token();
     </header>
 
     <main class="max-w-7xl mx-auto px-4 py-6">
+
+        <!-- Breadcrumb -->
+        <nav class="breadcrumb mb-6 flex items-center gap-2 text-sm">
+            <a href="<?= $back_page ?>" class="text-slate-400 hover:text-white flex items-center gap-1.5">
+                <i class="fas fa-home"></i>
+            </a>
+            <span class="text-slate-600">/</span>
+            <a href="../database/index.php" class="text-slate-400 hover:text-white">Database</a>
+            <span class="text-slate-600">/</span>
+            <span class="text-white font-semibold flex items-center gap-1.5">
+                <i class="fas fa-brain text-xs"></i> Manajemen TPA
+            </span>
+        </nav>
+
         <?php if ($success_msg): ?>
         <div class="mb-6 p-4 bg-emerald-500/20 border border-emerald-500/30 rounded-xl text-emerald-400 flex items-center gap-3">
             <i class="fas fa-check-circle text-xl"></i>

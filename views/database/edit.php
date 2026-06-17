@@ -136,15 +136,28 @@ function sel($d, $k, $val) { return ($d[$k] ?? '') === $val ? 'selected' : ''; }
 <body class="text-slate-700 relative custom-scroll bg-[url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%234f46e5\' fill-opacity=\'0.03\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')]">
 
     <div class="sticky top-0 z-50 flex items-center justify-between px-4 sm:px-8 py-4 bg-white/90 backdrop-blur-md border-b border-slate-200 shadow-sm">
-        <a href="index.php" class="inline-flex items-center gap-2 px-4 py-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-xs font-bold text-slate-500 hover:text-indigo-600 transition-all">
-            <i class="fas fa-arrow-left"></i> Kembali
-        </a>
+        <div class="flex items-center gap-3">
+            <a href="index.php" class="inline-flex items-center gap-2 px-4 py-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-xs font-bold text-slate-500 hover:text-indigo-600 transition-all">
+                <i class="fas fa-arrow-left"></i> Kembali
+            </a>
+        </div>
         <div class="text-[10px] sm:text-xs text-slate-400 font-extrabold uppercase tracking-widest flex items-center gap-2">
             TIM DATABASE <span class="hidden sm:inline-block w-1.5 h-1.5 rounded-full bg-indigo-500"></span> <span class="text-indigo-600 hidden sm:inline-block"><?= htmlspecialchars(strtoupper($_SESSION['nama'] ?? 'ADMIN')) ?></span>
         </div>
     </div>
 
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 py-8 relative z-10 pb-32">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 py-4 relative z-10 pb-8">
+        <?php
+        $breadcrumbs = [
+            ['label' => 'Home', 'url' => '../../'],
+            ['label' => 'Database', 'url' => 'index.php'],
+            ['label' => 'Edit: ' . substr($d['nama_lengkap'] ?? '', 0, 20) . (strlen($d['nama_lengkap'] ?? '') > 20 ? '...' : ''), 'icon' => 'fas fa-edit', 'active' => true]
+        ];
+        include '../../components/breadcrumb.php';
+        ?>
+    </div>
+
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 py-4 relative z-10 pb-32">
 
         <div class="bg-white border border-slate-200 rounded-[2rem] p-6 lg:p-8 mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 shadow-xl shadow-slate-200/50 relative overflow-hidden">
             <div class="absolute -right-10 -top-10 w-40 h-40 bg-indigo-50 rounded-full blur-2xl pointer-events-none"></div>

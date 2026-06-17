@@ -65,8 +65,10 @@ $status_msg = isset($_GET['status']) ? $_GET['status'] : '';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pusat Data & Analisis | SMK Pasundan 2</title>
     
+    <link rel="icon" type="image/svg+xml" href="../../favicon.svg">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="../../assets/css/quick-wins.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Outfit:wght@600;700;800;900&display=swap" rel="stylesheet">
 
@@ -157,6 +159,15 @@ $status_msg = isset($_GET['status']) ? $_GET['status'] : '';
     <main class="flex-1 flex flex-col h-screen overflow-hidden relative">
 
         <div class="p-6 md:p-8 lg:p-10 pb-4 flex-shrink-0 animate-fade-in">
+
+            <?php
+            $breadcrumbs = [
+                ['label' => 'Home', 'url' => '../../'],
+                ['label' => 'Database', 'icon' => 'fas fa-database', 'active' => true]
+            ];
+            include '../../components/breadcrumb.php';
+            ?>
+
             <header class="mb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
                 <div>
                     <div class="inline-flex items-center gap-2 px-3 py-1 bg-indigo-100 border border-indigo-200 rounded-full mb-3">
