@@ -197,7 +197,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cek_status'])) {
                     <a href="#jurusan" class="text-sm font-bold text-slate-600 hover:text-blue-600 transition">Jurusan</a>
                     <a href="#kuis" class="text-sm font-bold text-slate-600 hover:text-blue-600 transition">Kuis Minat</a>
                     <a href="#faq-section" class="text-sm font-bold text-slate-600 hover:text-blue-600 transition">FAQ</a>
-                    <a href="#cek-status" class="text-sm font-bold text-slate-600 hover:text-blue-600 transition">Cek Status</a>
+                    <a href="views/cek_status.php" target="_blank" class="text-sm font-bold text-slate-600 hover:text-blue-600 transition flex items-center gap-1">
+                        <i class="fas fa-search text-xs"></i> Cek Status
+                    </a>
                 </div>
                 <div class="flex items-center gap-3">
                     <a href="panitia/index.php" class="hidden sm:flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-sm font-bold rounded-xl shadow-lg transition transform hover:-translate-y-0.5">
