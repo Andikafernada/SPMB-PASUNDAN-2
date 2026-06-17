@@ -2,6 +2,7 @@
 -- WhatsApp Template System Migration
 -- Database: db_sekolah
 -- Created: 2026-06-16
+-- Updated: 2026-06-17
 -- ============================================================
 
 -- Create wa_templates table
@@ -24,34 +25,50 @@ INSERT IGNORE INTO wa_templates (kode_template, nama_template, jenis, template_t
     'ACC_PENDAFTARAN',
     'Konfirmasi ACC Pendaftaran',
     'acc',
-    'Assalamualaikum {NAMA}! 🎉
+    'Assalamualaikum {NAMA},
 
-Pendaftaran Anda di *SMK Pasundan 2* telah DISETUJUI.
+Selamat! Pendaftaran Anda di SMK Pasundan 2 Bandung telah diverifikasi.
 
-📋 *Detail Pendaftaran:*
-• ID Pendaftaran: *{ID_DAFTAR}*
-• Jurusan: *{JURUSAN}*
-• Asal Sekolah: {SEKOLAH}
+DETAIL PENDAFTARAN:
+ID Daftar: {ID_DAFTAR}
+Nama: {NAMA}
+Asal Sekolah: {SEKOLAH}
+Pilihan Jurusan: {JURUSAN}
 
-Silakan lakukan daftar ulang sesuai jadwal yang telah ditentukan.
+LENGKAPI BIODATA (WAJIB)
+Mohon lengkapi biodata, data alamat, dan orang tua Anda secara mandiri melalui tautan berikut:
+https://spmb-pasundan2.my.id/lengkapi_data.php?id_reg={ID_DAFTAR}
 
-Terdaftar oleh: {ADMIN}
-Tanggal: {TANGGAL}'
+INFORMASI DAFTAR ULANG:
+Segera lakukan daftar ulang dengan membawa berkas-berkas berikut:
+
+1. Ijazah/Paket B/STL/SKHUN SMP/MTs (Legalisir)
+2. Surat Keterangan Kelakuan Baik (SKKB)
+3. Fotocopy Akta Kelahiran
+4. Fotocopy Kartu Keluarga & KTP Orang Tua
+5. Fotocopy Ijazah SD
+6. Surat Tes Kesehatan (Asli)
+
+--
+Panitia SPMB SMK Pasundan 2 Bandung'
 ),
 (
     'DAFTAR_ULANG',
     'Konfirmasi Daftar Ulang',
     'daftar_ulang',
-    'Assalamualaikum {NAMA}! ✅
+    'Assalamualaikum {NAMA},
 
-Pendaftaran ulang Anda telah TERKONFIRMASI.
+Pendaftaran ulang Anda telah terkonfirmasi.
 
-📋 *Detail:*
-• ID Pendaftaran: *{ID_DAFTAR}*
+Detail:
+- ID Pendaftaran: {ID_DAFTAR}
 
-Selamat bergabung di keluarga besar *SMK Pasundan 2*! 🎓
+Selamat bergabung di keluarga besar SMK Pasundan 2 Bandung.
 
-Ditangani oleh: {ADMIN}'
+Ditangani oleh: {ADMIN}
+
+--
+Panitia SPMB SMK Pasundan 2 Bandung'
 ),
 (
     'PINDAH_JURUSAN',
@@ -59,17 +76,17 @@ Ditangani oleh: {ADMIN}'
     'pindah_jurusan',
     'Assalamualaikum {NAMA},
 
-Terdapat perubahan data pada pendaftaran Anda:
+Dengan ini kami menginformasikan terjadi perubahan data pada pendaftaran Anda:
 
-🔄 *Perubahan Jurusan:*
-• Jurusan Lama: *{JURUSAN_LAMA}*
-• Jurusan Baru: *{JURUSAN_BARU}*
-• Alasan: {ALASAN}
+Data Perubahan Jurusan:
+- Jurusan Lama: {JURUSAN_LAMA}
+- Jurusan Baru: {JURUSAN_BARU}
+- Alasan: {ALASAN}
 
-Jika ada pertanyaan silakan hubungi bagian administrasi.
+Jika ada pertanyaan, silakan hubungi bagian administrasi.
 
-Hormat kami,
-{ADMIN}'
+Hormat Kami,
+Team Data SMK Pasundan 2 Bandung'
 ),
 (
     'CABUT_BERKAS',
@@ -79,13 +96,16 @@ Hormat kami,
 
 Berdasarkan permintaan, data pendaftaran Anda telah ditarik/dicabut dari sistem.
 
-📋 *Alasan:* {ALASAN}
+Alasan: {ALASAN}
 
 Hubungi admin jika perlu bantuan atau informasi lebih lanjut.
 
 Hormat kami,
 {ADMIN}
-{TANGGAL}'
+{TANGGAL}
+
+--
+Panitia SPMB SMK Pasundan 2 Bandung'
 ),
 (
     'REMINDER_BAYAR',
@@ -93,15 +113,14 @@ Hormat kami,
     'reminder',
     'Assalamualaikum {NAMA},
 
-📢 *PENGINGAT PEMBAYARAN*
+PENGINGAT PEMBAYARAN
 
 Pendaftaran {GELOMBANG} Anda:
-• Nominal: *Rp{BIAYA}*
-• Status: BELUM LUNAS ⚠️
+- Nominal: Rp{BIAYA}
+- Status: BELUM LUNAS
 
 Segera lunasi agar pendaftaran tidak hangus.
 
 Terima kasih.
-SMK Pasundan 2'
+SMK Pasundan 2 Bandung'
 );
-
