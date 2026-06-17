@@ -87,7 +87,10 @@ $total_siswa = mysqli_num_rows($result_siswa);
                 <p class="text-[10px] text-slate-500">Kirim pesan masal ke pendaftar</p>
             </div>
         </div>
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-3">
+            <a href="wa_broadcast_history.php" class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-xl text-xs font-bold text-indigo-600 hover:text-indigo-700 transition-all">
+                <i class="fas fa-history"></i> Lihat History
+            </a>
             <span class="hidden sm:inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse mr-2"></span>
             <span class="text-[10px] font-bold text-slate-400"><?= htmlspecialchars($_SESSION['nama'] ?? 'ADMIN') ?></span>
         </div>
@@ -465,7 +468,12 @@ $total_siswa = mysqli_num_rows($result_siswa);
                         logEntry.innerHTML = `<span class="text-emerald-600"><i class="fas fa-check-circle mr-1"></i></span> ${student.nama} - Terkirim`;
                     } else {
                         failed++;
-                        logEntry.innerHTML = `<span class="text-red-600"><i class="fas fa-times-circle mr-1"></i></span> ${student.nama} - ${result.error || 'Gagal'}`;
+                        // Show more detailed error
+                        let errorMsg = result.error || 'Gagal';
+                        if (errorMsg.includes('Evo API')) {
+                            errorMsg += ' (Cek apakah WA gateway online?)';
+                        }
+                        logEntry.innerHTML = `<span class="text-red-600"><i class="fas fa-times-circle mr-1"></i></span> ${student.nama} - ${errorMsg}`;
                     }
                 } catch (err) {
                     failed++;
