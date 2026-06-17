@@ -36,13 +36,16 @@ $kontribusi_pct = $total_all > 0 ? round(($total_saya / $total_all) * 100) : 0;
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistem Pendaftaran | SPMB SMK Pasundan 2</title>
 
+    <link rel="icon" type="image/svg+xml" href="../../favicon.svg">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Outfit:wght@600;700;800;900&display=swap" rel="stylesheet">
+    <link href="../../assets/css/quick-wins.css" rel="stylesheet">
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="../../assets/js/quick-wins.js"></script>
 
     <script>
       tailwind.config = {
@@ -208,12 +211,19 @@ $kontribusi_pct = $total_all > 0 ? round(($total_saya / $total_all) * 100) : 0;
         <!-- AREA KONTEN UTAMA -->
         <div class="flex-1 p-5 md:p-8 lg:p-10 overflow-y-auto custom-scroll relative z-10 animate-fade-in">
 
+            <!-- Breadcrumb -->
+            <nav class="breadcrumb mb-6">
+                <a href="../../"><i class="fas fa-home"></i></a>
+                <span class="breadcrumb-separator">/</span>
+                <span class="breadcrumb-current">Pendaftaran</span>
+            </nav>
+
             <!-- PAGE: INPUT SISWA -->
             <div id="page-input" class="page-content <?= $menu=='input' ? 'active' : '' ?>">
                 <header class="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
                     <div>
                         <h1 class="text-3xl lg:text-4xl font-outfit font-black text-slate-900 tracking-tight mb-2">Input Siswa Baru</h1>
-                        <p class="text-sm font-medium text-slate-500">Lengkapi data dasar. Area kerja dirancang khusus agar mata tidak cepat lelah.</p>
+                        <p class="text-sm font-medium text-slate-500">Lengkapi data dasar. <span class="text-cyber-cyan">Tip: Tekan <kbd>Ctrl+S</kbd> untuk menyimpan.</span></p>
                     </div>
                     <div class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-slate-200 shadow-sm text-xs font-bold text-slate-600">
                         <i class="fas fa-calendar text-cyber-blue"></i> <?= date('d M Y') ?>
@@ -245,7 +255,12 @@ $kontribusi_pct = $total_all > 0 ? round(($total_saya / $total_all) * 100) : 0;
 
                 <!-- FORM CONTAINER (WHITE & CLEAN) -->
                 <div class="bg-white border border-slate-200 rounded-[2rem] p-6 lg:p-8 shadow-xl shadow-slate-200/50 relative overflow-hidden">
-                    
+
+                    <!-- Draft Status -->
+                    <div id="draft-status" class="hidden absolute top-4 right-4 flex items-center gap-2 px-3 py-1.5 bg-amber-50 border border-amber-200 rounded-lg text-amber-600 text-xs font-bold">
+                        <i class="fas fa-save"></i> <span>Draft tersimpan</span>
+                    </div>
+
                     <form action="simpan.php" method="POST" id="form-daftar" class="relative z-10" onsubmit="btnLoading(this)">
 
                         <div class="mb-8">
@@ -435,6 +450,52 @@ $kontribusi_pct = $total_all > 0 ? round(($total_saya / $total_all) * 100) : 0;
         const btn = document.getElementById('btn-submit');
         btn.innerHTML = `<svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> <span>Memproses...</span>`;
         btn.classList.add('opacity-80', 'cursor-not-allowed');
+        // Clear draft on successful submit
+        localStorage.removeItem('spmb_draft_pendaftaran');
+    }
+
+    // Auto-save Draft
+    const DRAFT_KEY = 'spmb_draft_pendaftaran';
+    const formEl = document.getElementById('form-daftar');
+    const draftStatus = document.getElementById('draft-status');
+
+    // Load draft on page load
+    if (formEl) {
+        const savedDraft = localStorage.getItem(DRAFT_KEY);
+        if (savedDraft) {
+            try {
+                const draft = JSON.parse(savedDraft);
+                Object.keys(draft).forEach(name => {
+                    const input = formEl.querySelector(`[name="${name}"]`);
+                    if (input) input.value = draft[name];
+                });
+                if (draftStatus) {
+                    draftStatus.classList.remove('hidden');
+                    draftStatus.classList.add('flex');
+                }
+            } catch (e) {}
+        }
+
+        // Save draft on input change
+        let draftTimeout;
+        formEl.addEventListener('input', () => {
+            clearTimeout(draftTimeout);
+            draftTimeout = setTimeout(() => {
+                const formData = new FormData(formEl);
+                const data = {};
+                formData.forEach((value, key) => data[key] = value);
+                localStorage.setItem(DRAFT_KEY, JSON.stringify(data));
+                if (draftStatus) {
+                    draftStatus.classList.remove('hidden');
+                    draftStatus.classList.add('flex');
+                }
+            }, 1000);
+        });
+
+        // Clear draft on successful submit
+        formEl.addEventListener('submit', () => {
+            localStorage.removeItem(DRAFT_KEY);
+        });
     }
 
     // Menu Navigation System
@@ -465,6 +526,8 @@ $kontribusi_pct = $total_all > 0 ? round(($total_saya / $total_all) * 100) : 0;
     // Custom Notifikasi SweetAlert & CONFETTI (Tetap Terang Agar Matching Form)
     const p = new URLSearchParams(window.location.search);
     if (p.get('status') === 'success') {
+        // Add to undo stack
+        UndoSystem.push('create', { id: p.get('id') || Date.now() });
 
         // 1. Tembakkan Confetti
         var duration = 3 * 1000;
@@ -484,7 +547,7 @@ $kontribusi_pct = $total_all > 0 ? round(($total_saya / $total_all) * 100) : 0;
         // 2. Munculkan Notifikasi Light Mode tapi dengan aksen Neon
         Swal.fire({
             title: '<span class="text-2xl font-black text-cyber-cyan tracking-tight">MANTAP! 🚀</span>',
-            html: '<div class="text-slate-500 font-medium text-sm mt-1">Data siswa berhasil ditambahkan. Terus semangat mengejar target!</div>',
+            html: '<div class="text-slate-500 font-medium text-sm mt-1">Data siswa berhasil ditambahkan. Terus semangat mengejar target!</div><div class="text-xs text-slate-400 mt-2">Tekan "Input Data Berikutnya" atau klik "URUNGKAN" di notifikasi untuk undo.</div>',
             icon: 'success', iconColor: '#06b6d4',
             background: '#ffffff',
             color: '#1e293b',

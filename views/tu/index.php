@@ -28,9 +28,12 @@ $count_lunas = mysqli_num_rows($sql_lunas);
     <title>Sistem Panitia (TU) | SPMB SMK Pasundan 2</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="icon" type="image/svg+xml" href="../../favicon.svg">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@600;700;800;900&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="../../assets/js/quick-wins.js"></script>
+    <link href="../../assets/css/quick-wins.css" rel="stylesheet">
     
     <script>
       tailwind.config = {
@@ -139,16 +142,38 @@ $count_lunas = mysqli_num_rows($sql_lunas);
             <a href="../../logout.php" class="text-slate-400 hover:text-red-500"><i class="fas fa-sign-out-alt"></i></a>
         </div>
 
-        <div class="flex-1 p-5 md:p-8 lg:p-10 overflow-y-auto custom-scroll relative z-10 animate-fade-in pb-20">
-            
+        <div class="flex-1 p-5 md:p-8 lg:p-10 overflow-y-auto custom-scroll relative z-10 animate-fade-in pb-24">
+
+            <!-- Breadcrumb -->
+            <nav class="breadcrumb mb-6">
+                <a href="../../"><i class="fas fa-home"></i></a>
+                <span class="breadcrumb-separator">/</span>
+                <span class="breadcrumb-current">Verifikasi Pelunasan</span>
+            </nav>
+
             <header class="mb-8">
                 <div class="inline-flex items-center gap-2 px-3 py-1 bg-indigo-100 border border-indigo-200 rounded-full mb-3">
                     <span class="w-2 h-2 rounded-full bg-indigo-600 animate-pulse"></span>
                     <span class="text-[10px] font-bold text-indigo-700 uppercase tracking-widest">Sistem Real-time</span>
                 </div>
                 <h1 class="font-outfit text-3xl md:text-4xl font-black text-slate-900 mb-2">Verifikasi Pelunasan</h1>
-                <p class="text-sm text-slate-500">Kelola antrean pembayaran pendaftaran dan cetak ID Pendaftaran siswa.</p>
+                <p class="text-sm text-slate-500">Kelola antrean pembayaran pendaftaran dan cetak ID Pendaftaran siswa. <span class="text-indigo-500 font-medium">Gunakan <kbd>Ctrl+A</kbd> untuk bulk action.</span></p>
             </header>
+
+            <!-- Bulk Actions Bar -->
+            <div id="bulk-actions" class="bulk-actions-bar">
+                <div class="flex items-center gap-3">
+                    <span class="bulk-count-badge" id="bulk-count">0</span>
+                    <span class="text-sm font-bold text-slate-600">terpilih</span>
+                </div>
+                <div class="h-8 w-px bg-slate-200"></div>
+                <button onclick="bulkAccAll()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-lg transition-colors">
+                    <i class="fas fa-check mr-2"></i>ACC Semua
+                </button>
+                <button onclick="BulkActions.deselectAll()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs rounded-lg transition-colors">
+                    <i class="fas fa-times mr-2"></i>Batal
+                </button>
+            </div>
 
             <div class="grid grid-cols-2 gap-4 md:gap-6 mb-8">
                 <div class="bg-white border border-slate-200 p-5 md:p-6 rounded-2xl md:rounded-[2rem] shadow-sm flex flex-col md:flex-row md:items-center gap-4 relative overflow-hidden group hover:border-amber-300 transition-colors">
@@ -187,8 +212,12 @@ $count_lunas = mysqli_num_rows($sql_lunas);
                 <?php if($count_belum > 0): ?>
                     <div class="space-y-3 md:space-y-4 pb-20">
                         <?php while($row = mysqli_fetch_assoc($sql_belum)): ?>
-                        <div class="bg-white border border-slate-200 p-4 md:p-5 rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:border-indigo-300 transition-all shadow-sm hover:shadow-md group">
+                        <div class="bulk-item bg-white border border-slate-200 p-4 md:p-5 rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:border-indigo-300 transition-all shadow-sm hover:shadow-md group">
                             <div class="flex items-start md:items-center gap-4">
+                                <!-- Checkbox -->
+                                <div class="row-checkbox-cell flex items-center">
+                                    <input type="checkbox" class="row-checkbox w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer" data-id="<?= $row['id_siswa'] ?>" onchange="updateBulkCount()">
+                                </div>
                                 <div class="w-10 h-10 md:w-12 md:h-12 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 text-sm md:text-base group-hover:text-indigo-500 group-hover:bg-indigo-50 transition-colors shrink-0">
                                     <i class="fas fa-user"></i>
                                 </div>
@@ -337,6 +366,73 @@ $count_lunas = mysqli_num_rows($sql_lunas);
                 window.history.replaceState({}, document.title, window.location.pathname);
             });
         }
+
+        // Bulk Actions
+        async function bulkAccAll() {
+            const selectedIds = BulkActions.getSelected();
+            if (selectedIds.length === 0) {
+                showToast('Pilih siswa terlebih dahulu', 'warning');
+                return;
+            }
+
+            const result = await Swal.fire({
+                title: 'Konfirmasi Bulk ACC',
+                html: `<p class="text-slate-600 mb-2">Yakin ingin ACC <b>${selectedIds.length}</b> pendaftar sekaligus?</p>
+                       <p class="text-xs text-slate-400">Setiap pendaftar akan mendapat ID Pendaftaran dan notifikasi WA.</p>`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'YA, ACC SEMUA',
+                cancelButtonText: 'BATAL',
+                confirmButtonColor: '#4f46e5'
+            });
+
+            if (!result.isConfirmed) return;
+
+            LoadingOverlay.show(`Memproses ${selectedIds.length} pendaftar...`);
+
+            // Process each one
+            let success = 0;
+            let failed = 0;
+
+            for (const id of selectedIds) {
+                try {
+                    const response = await fetch(`proses_acc.php?id=${id}`);
+                    if (response.ok) success++;
+                    else failed++;
+                } catch (e) {
+                    failed++;
+                }
+                LoadingOverlay.update(`Memproses ${success + failed}/${selectedIds.length}...`);
+            }
+
+            LoadingOverlay.hide();
+
+            await Swal.fire({
+                title: 'Selesai!',
+                html: `<p class="text-emerald-600 font-bold">${success} berhasil di-ACC</p>
+                       ${failed > 0 ? `<p class="text-red-500 text-sm mt-1">${failed} gagal</p>` : ''}`,
+                icon: success > 0 ? 'success' : 'error'
+            });
+
+            UndoSystem.push('acc', { count: success });
+            window.location.reload();
+        }
+
+        // Init Bulk Actions
+        BulkActions.init({
+            checkboxClass: '.row-checkbox',
+            itemClass: '.bulk-item',
+            countDisplay: '#bulk-count',
+            actionsContainer: '#bulk-actions'
+        });
+
+        // Keyboard shortcut for bulk select all
+        KeyboardShortcuts.init({
+            'ctrl+b': () => {
+                BulkActions.selectAll();
+                showToast(`${BulkActions.getSelected().length} item dipilih`, 'info');
+            }
+        });
     </script>
 </body>
 </html>
