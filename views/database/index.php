@@ -10,7 +10,7 @@ include '../../config.php';
 require_admin_ip();
 
 // Check session
-if(!isset($_SESSION['role']) || !in_array(strtolower($_SESSION['role']), ['database','superuser'])) {
+if(!isset($_SESSION['role']) || !in_array(strtolower($_SESSION['role']), ['database','superuser','superuser1'])) {
     header("Location: ../../panitia/index.php"); exit();
 }
 
@@ -126,6 +126,9 @@ $status_msg = isset($_GET['status']) ? $_GET['status'] : '';
                 </a>
                 <a href="wa_manager.php" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 transition-all border border-transparent">
                     <i class="fab fa-whatsapp w-5 text-center text-lg"></i> <span>WA Manager</span>
+                </a>
+                <a href="wa_broadcast.php" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm text-teal-600 hover:text-teal-700 hover:bg-teal-50 transition-all border border-transparent">
+                    <i class="fas fa-bullhorn w-5 text-center"></i> <span>Broadcast WA</span>
                 </a>
             </nav>
         </div>
