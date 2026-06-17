@@ -30,6 +30,39 @@ $public_lunas     = mysqli_num_rows(mysqli_query($conn, "SELECT id_siswa FROM si
 // Statistik per jurusan
 $stat_jurusan = mysqli_query($conn, "SELECT jurusan, COUNT(*) as jml FROM siswa GROUP BY jurusan ORDER BY jml DESC");
 
+// ===== STATISTIK HARIAN & MINGGUAN (Gamification) =====
+$today = date('Y-m-d');
+$week_start = date('Y-m-d', strtotime('monday this week'));
+$month_start = date('Y-m-01');
+
+// Daily stats
+$daily_today = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as jml FROM siswa WHERE DATE(tgl_daftar) = '$today'"));
+$daily_acc = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as jml FROM wa_broadcast_history WHERE DATE(created_at) = '$today' AND status = 'success'"));
+
+// Weekly stats
+$weekly_today = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as jml FROM siswa WHERE DATE(tgl_daftar) BETWEEN '$week_start' AND '$today'"));
+$weekly_acc = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as jml FROM wa_broadcast_history WHERE DATE(created_at) BETWEEN '$week_start' AND '$today' AND status = 'success'"));
+
+// Top performers
+$top_petugas = mysqli_query($conn, "
+    SELECT petugas_pendaftar, COUNT(*) as jml
+    FROM siswa
+    WHERE DATE(tgl_daftar) BETWEEN '$week_start' AND '$today'
+    AND petugas_pendaftar IS NOT NULL
+    GROUP BY petugas_pendaftar
+    ORDER BY jml DESC
+    LIMIT 5
+");
+
+// TPA Stats
+$tpa_stats = mysqli_fetch_assoc(mysqli_query($conn, "
+    SELECT
+        COUNT(CASE WHEN tpa_selesai = 1 THEN 1 END) as sudah_tpa,
+        COUNT(CASE WHEN tpa_selesai != 1 OR tpa_selesai IS NULL THEN 1 END) as belum_tpa,
+        AVG(tpa_nilai_total) as rata_nilai
+    FROM siswa WHERE id_pendaftaran IS NOT NULL AND id_pendaftaran != ''
+"));
+
 // ===== FILTER VIEW =====
 $view   = isset($_GET['view'])   ? $_GET['view']   : 'SEMUA';
 $search = isset($_GET['cari'])   ? mysqli_real_escape_string($conn, $_GET['cari']) : '';
@@ -116,6 +149,9 @@ $status_msg = isset($_GET['status']) ? $_GET['status'] : '';
             <nav class="space-y-1.5">
                 <a href="index.php" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm bg-indigo-600 text-white shadow-md shadow-indigo-200 transition-all">
                     <i class="fas fa-database w-5 text-center"></i> <span>Data Pendaftar</span>
+                </a>
+                <a href="../tpa/leaderboard.php" target="_blank" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm text-amber-600 hover:text-amber-700 hover:bg-amber-50 transition-all">
+                    <i class="fas fa-trophy w-5 text-center"></i> <span>Leaderboard TPA</span>
                 </a>
                 <a href="pengkelasan.php" class="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-all">
                     <i class="fas fa-layer-group w-5 text-center"></i> <span>Pengkelasan</span>
@@ -205,6 +241,102 @@ $status_msg = isset($_GET['status']) ? $_GET['status'] : '';
                     <span class="text-2xl font-outfit font-black"><?= $total_semua>0 ? round($total_lengkap/$total_semua*100) : 0 ?>%</span>
                 </div>
             </div>
+
+            <!-- Gamification: Daily/Weekly Stats -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+                <!-- Today Stats -->
+                <div class="bg-gradient-to-br from-cyan-500 to-blue-600 rounded-2xl p-5 text-white shadow-lg shadow-cyan-500/20">
+                    <div class="flex items-center gap-2 mb-3">
+                        <i class="fas fa-calendar-day text-cyan-200"></i>
+                        <span class="text-xs font-bold text-cyan-100 uppercase tracking-widest">Hari Ini</span>
+                        <span class="ml-auto text-xs bg-white/20 px-2 py-0.5 rounded-full"><?= date('d M') ?></span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <div class="text-3xl font-black"><?= $daily_today['jml'] ?></div>
+                            <div class="text-xs text-cyan-100">Pendaftar Baru</div>
+                        </div>
+                        <div>
+                            <div class="text-3xl font-black"><?= $daily_acc['jml'] ?></div>
+                            <div class="text-xs text-cyan-100">WA Terkirim</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- This Week Stats -->
+                <div class="bg-gradient-to-br from-violet-500 to-purple-600 rounded-2xl p-5 text-white shadow-lg shadow-violet-500/20">
+                    <div class="flex items-center gap-2 mb-3">
+                        <i class="fas fa-calendar-week text-violet-200"></i>
+                        <span class="text-xs font-bold text-violet-100 uppercase tracking-widest">Minggu Ini</span>
+                        <span class="ml-auto text-xs bg-white/20 px-2 py-0.5 rounded-full">
+                            <?= date('d') . ' - ' . date('d M') ?>
+                        </span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <div class="text-3xl font-black"><?= $weekly_today['jml'] ?></div>
+                            <div class="text-xs text-violet-100">Total Minggu Ini</div>
+                        </div>
+                        <div>
+                            <div class="text-3xl font-black"><?= $weekly_acc['jml'] ?></div>
+                            <div class="text-xs text-violet-100">WA Minggu Ini</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TPA Quick Stats -->
+                <div class="bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl p-5 text-white shadow-lg shadow-amber-500/20">
+                    <div class="flex items-center gap-2 mb-3">
+                        <i class="fas fa-brain text-amber-200"></i>
+                        <span class="text-xs font-bold text-amber-100 uppercase tracking-widest">TPA</span>
+                        <a href="leaderboard.php" target="_blank" class="ml-auto text-xs bg-white/20 px-2 py-0.5 rounded-full hover:bg-white/30 transition-colors">
+                            <i class="fas fa-external-link-alt mr-1"></i>Leaderboard
+                        </a>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2">
+                        <div class="text-center">
+                            <div class="text-2xl font-black"><?= $tpa_stats['sudah_tpa'] ?? 0 ?></div>
+                            <div class="text-[10px] text-amber-100">Sudah TPA</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-black"><?= $tpa_stats['belum_tpa'] ?? 0 ?></div>
+                            <div class="text-[10px] text-amber-100">Belum TPA</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-black"><?= round($tpa_stats['rata_nilai'] ?? 0) ?></div>
+                            <div class="text-[10px] text-amber-100">Rata-rata</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Petugas Leaderboard -->
+            <?php if (mysqli_num_rows($top_petugas) > 0): ?>
+            <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm mb-6">
+                <div class="flex items-center gap-2 mb-4">
+                    <i class="fas fa-trophy text-yellow-500"></i>
+                    <h3 class="font-bold text-slate-800">Top Petugas Minggu Ini</h3>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
+                    <?php
+                    $no = 1;
+                    while ($petugas = mysqli_fetch_assoc($top_petugas)):
+                        $rank_color = $no == 1 ? 'from-yellow-400 to-amber-500' : ($no == 2 ? 'from-gray-300 to-gray-400' : ($no == 3 ? 'from-amber-600 to-amber-700' : 'from-slate-400 to-slate-500'));
+                        $text_color = $no == 1 ? 'text-yellow-600' : ($no == 2 ? 'text-gray-500' : ($no == 3 ? 'text-amber-600' : 'text-slate-500'));
+                    ?>
+                    <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors">
+                        <div class="w-8 h-8 rounded-full bg-gradient-to-br <?= $rank_color ?> flex items-center justify-center text-white font-black text-sm">
+                            <?= $no ?>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="font-bold text-slate-800 text-sm truncate"><?= htmlspecialchars($petugas['petugas_pendaftar']) ?></div>
+                            <div class="text-xs <?= $text_color ?> font-bold"><?= $petugas['jml'] ?> pendaftar</div>
+                        </div>
+                    </div>
+                    <?php $no++; endwhile; ?>
+                </div>
+            </div>
+            <?php endif; ?>
 
             <div class="flex flex-col xl:flex-row gap-4 items-start xl:items-center justify-between">
                 
